@@ -1,8 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import com.jfoenix.controls.JFXButton?>
+<?import de.jensd.fx.glyphs.octicons.OctIconView?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
-<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
 
 <AnchorPane xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
             fx:controller="apz.activemq.controller.NavigationController"
@@ -19,6 +24,20 @@
                 </ImageView>
             </HBox>
         </VBox>
+        <JFXButton id="info" text=" " onAction="#showInfoView"
+                   prefWidth="220.0" prefHeight="54.0"
+                   AnchorPane.rightAnchor="0.0" AnchorPane.bottomAnchor="0.0"
+                   AnchorPane.leftAnchor="0.0"
+                   textFill="WHITE"
+                   alignment="BASELINE_LEFT">
+            <font>
+                <Font size="14.0"/>
+            </font>
+            <graphic>
+                <OctIconView glyphName="QUESTION" wrappingWidth="28.0" size="18" fill="WHITE"
+                             textAlignment="CENTER"/>
+            </graphic>
+        </JFXButton>
     </AnchorPane>
     <AnchorPane fx:id="container" style="-fx-background-color: #f9f9f9;"
                 AnchorPane.topAnchor="0.0" AnchorPane.rightAnchor="0.0"

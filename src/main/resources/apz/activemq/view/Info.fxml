@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+<?import javafx.scene.control.Hyperlink?>
+
+<VBox xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
+      fx:controller="apz.activemq.controller.InfoController"
+      fx:id="root"
+      AnchorPane.topAnchor="0.0" AnchorPane.rightAnchor="0.0"
+      AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0">
+    <Label id="title" maxWidth="Infinity" minHeight="84.0" style="-fx-background-color: #fbfbfb;" text="INFO">
+        <font>
+            <Font name="System Bold" size="28.0"/>
+        </font>
+        <padding>
+            <Insets left="30.0" top="10.0"/>
+        </padding>
+    </Label>
+    <VBox alignment="CENTER" maxHeight="Infinity" spacing="10" VBox.vgrow="ALWAYS"
+          style="-fx-background-color: #f9f9f9;">
+        <HBox alignment="TOP_CENTER">
+            <HBox fx:id="infoCard" alignment="CENTER" minWidth="500.0" spacing="20.0"
+                  style="-fx-background-color: WHITE">
+                <VBox alignment="TOP_CENTER">
+                    <ImageView preserveRatio="true" smooth="false">
+                        <image>
+                            <Image url="@/img/activemq-title-icon.png"/>
+                        </image>
+                    </ImageView>
+                </VBox>
+                <VBox HBox.hgrow="ALWAYS">
+                    <Label prefHeight="54.0" text="ActiveMQ Tool">
+                        <font>
+                            <Font name="System Bold" size="28.0"/>
+                        </font>
+                        <padding>
+                            <Insets left="30.0" top="10.0"/>
+                        </padding>
+                    </Label>
+                    <HBox spacing="10">
+                        <padding>
+                            <Insets top="30.0"/>
+                        </padding>
+                        <Label text="developed by:"/>
+                        <Label id="developer" text="Antonino Piazza"/>
+                    </HBox>
+                    <HBox spacing="10">
+                        <Label fx:id="icon">
+                            <padding>
+                                <Insets left="65.0" top="7.0"/>
+                            </padding>
+                        </Label>
+                        <Label fx:id="repository" text="https://github.com/a-p-z/activemq-tool">
+                            <padding>
+                                <Insets left="2.0" top="7.0"/>
+                            </padding>
+                        </Label>
+                    </HBox>
+                </VBox>
+                <padding>
+                    <Insets bottom="20.0" left="20.0" right="20.0" top="20.0"/>
+                </padding>
+            </HBox>
+        </HBox>
+    </VBox>
+</VBox>
