@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
+            fx:controller="apz.activemq.controller.NavigationController"
+            fx:id="root">
+    <AnchorPane style="-fx-background-color: #c12766;"
+                AnchorPane.topAnchor="0.0" AnchorPane.bottomAnchor="0.0"
+                AnchorPane.leftAnchor="0.0">
+        <VBox alignment="CENTER">
+            <HBox prefWidth="220.0" prefHeight="84.0" alignment="CENTER" style="-fx-background-color: #fbfbfb;">
+                <ImageView fitHeight="64.0" preserveRatio="true" smooth="false">
+                    <image>
+                        <Image url="@/img/activemq-logo.png"/>
+                    </image>
+                </ImageView>
+            </HBox>
+        </VBox>
+    </AnchorPane>
+    <AnchorPane fx:id="container" style="-fx-background-color: #f9f9f9;"
+                AnchorPane.topAnchor="0.0" AnchorPane.rightAnchor="0.0"
+                AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="220.0"/>
+</AnchorPane>

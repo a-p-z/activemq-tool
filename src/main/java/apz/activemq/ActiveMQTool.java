@@ -1,10 +1,13 @@
 package apz.activemq;
 
+import apz.activemq.controller.NavigationController;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
+
+import static apz.activemq.controller.ControllerFactory.newInstance;
 
 public class ActiveMQTool extends Application {
 
@@ -17,6 +20,9 @@ public class ActiveMQTool extends Application {
 
         final StackPane stackPane = new StackPane();
         final Scene scene = new Scene(stackPane, 800, 580);
+        final NavigationController navigationController = newInstance(NavigationController.class);
+
+        stackPane.getChildren().add(navigationController.root);
 
         stage.setTitle("ActiveMQ Tool");
         stage.getIcons().add(new Image("img/activemq-title-icon.png"));
