@@ -103,12 +103,12 @@ public class Injector {
         requireNonNull(objects, "objects must be not null");
 
         final Object dependency = stream(objects)
-                .filter(o -> field.getClass().isInstance(o))
+                .filter(o -> field.getType().isInstance(o))
                 .findFirst()
                 .orElseGet(() -> {
                     final Inject inject = field.getAnnotation(Inject.class);
                     final String qualifier = inject.qualifier().isEmpty() ? field.getName() : inject.qualifier();
-                    return field.getType().cast(REGISTRY.get(qualifier));
+                    return get(qualifier, field.getType());
                 });
 
         try {

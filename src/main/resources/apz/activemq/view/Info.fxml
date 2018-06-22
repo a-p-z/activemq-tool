@@ -57,11 +57,11 @@
                                 <Insets left="65.0" top="7.0"/>
                             </padding>
                         </Label>
-                        <Label fx:id="repository" text="https://github.com/a-p-z/activemq-tool">
+                        <Hyperlink fx:id="repository" text="https://github.com/a-p-z/activemq-tool" onAction="#showRepository">
                             <padding>
                                 <Insets left="2.0" top="7.0"/>
                             </padding>
-                        </Label>
+                        </Hyperlink>
                     </HBox>
                 </VBox>
                 <padding>

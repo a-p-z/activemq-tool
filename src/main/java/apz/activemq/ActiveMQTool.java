@@ -7,6 +7,7 @@ import javafx.scene.image.Image;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 
+import static apz.activemq.Configuration.configureHostServices;
 import static apz.activemq.controller.ControllerFactory.newInstance;
 
 public class ActiveMQTool extends Application {
@@ -20,6 +21,9 @@ public class ActiveMQTool extends Application {
 
         final StackPane stackPane = new StackPane();
         final Scene scene = new Scene(stackPane, 800, 580);
+
+        configureHostServices(this);
+
         final NavigationController navigationController = newInstance(NavigationController.class);
 
         stackPane.getChildren().add(navigationController.root);

@@ -8,6 +8,7 @@ import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.net.URL;
 
+import static apz.activemq.injection.Injector.resolveDependencies;
 import static java.util.Objects.requireNonNull;
 
 public class ControllerFactory {
@@ -42,6 +43,8 @@ public class ControllerFactory {
         } catch (final IOException e) {
             throw new IORuntimeException(e);
         }
-        return loader.getController();
+        final T controller = loader.getController();
+        resolveDependencies(controller);
+        return controller;
     }
 }
