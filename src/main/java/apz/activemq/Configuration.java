@@ -1,5 +1,6 @@
 package apz.activemq;
 
+import apz.activemq.jmx.JmxClient;
 import com.sun.deploy.uitoolkit.impl.fx.HostServicesFactory;
 import com.sun.javafx.application.HostServicesDelegate;
 import javafx.application.Application;
@@ -16,5 +17,12 @@ public class Configuration {
         final HostServicesDelegate hostServices = HostServicesFactory.getInstance(application);
         register("hostServices", hostServices);
         return hostServices;
+    }
+
+    public static JmxClient configureJmxClient() {
+
+        final JmxClient jmxClient = new JmxClient();
+        register("jmxClient", jmxClient);
+        return jmxClient;
     }
 }

@@ -39,6 +39,7 @@ public class NavigationController implements Initializable {
 
         container.getChildren().clear();
         container.getChildren().add(brokerController.root);
+        brokerController.refresh(null);
     }
 
     @FXML

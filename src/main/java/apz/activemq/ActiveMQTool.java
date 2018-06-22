@@ -8,6 +8,7 @@ import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 
 import static apz.activemq.Configuration.configureHostServices;
+import static apz.activemq.Configuration.configureJmxClient;
 import static apz.activemq.controller.ControllerFactory.newInstance;
 
 public class ActiveMQTool extends Application {
@@ -23,6 +24,7 @@ public class ActiveMQTool extends Application {
         final Scene scene = new Scene(stackPane, 800, 580);
 
         configureHostServices(this);
+        configureJmxClient();
 
         final NavigationController navigationController = newInstance(NavigationController.class);
 

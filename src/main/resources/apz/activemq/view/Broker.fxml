@@ -1,8 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import com.jfoenix.controls.JFXButton?>
+<?import com.jfoenix.controls.JFXProgressBar?>
+<?import com.jfoenix.controls.JFXSpinner?>
+<?import de.jensd.fx.glyphs.materialdesignicons.MaterialDesignIconView?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
@@ -19,4 +24,88 @@
             <Insets left="30.0" top="10.0" />
         </padding>
     </Label>
+    <JFXProgressBar id="progressBar" maxWidth="Infinity" progress="0"/>
+    <HBox>
+        <JFXButton fx:id="refresh" onMouseClicked="#refresh">
+            <graphic>
+                <MaterialDesignIconView glyphName="REFRESH" wrappingWidth="28.0" size="18" fill="#c12766"
+                                        textAlignment="CENTER"/>
+            </graphic>
+        </JFXButton>
+    </HBox>
+    <VBox alignment="CENTER" maxHeight="Infinity" spacing="10" VBox.vgrow="ALWAYS" style="-fx-background-color: #f9f9f9;">
+        <HBox alignment="CENTER">
+            <HBox fx:id="infoCard" alignment="CENTER_LEFT" minWidth="500.0" spacing="40.0" style="-fx-background-color: WHITE">
+                <VBox>
+                    <Label text="Id" prefHeight="54.0"/>
+                    <Label text="Name" prefHeight="54.0"/>
+                    <Label text="Version" prefHeight="54.0"/>
+                    <Label text="Uptime" prefHeight="54.0"/>
+                    <HBox.margin>
+                        <Insets />
+                    </HBox.margin>
+                </VBox>
+                <VBox>
+                    <Label fx:id="id" prefHeight="54.0">
+                        <font>
+                            <Font name="System Bold"/>
+                        </font>
+                    </Label>
+                    <Label fx:id="name" prefHeight="54.0"/>
+                    <Label fx:id="version" prefHeight="54.0"/>
+                    <Label fx:id="uptime" prefHeight="54.0"/>
+                </VBox>
+                <padding>
+                    <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+                </padding>
+            </HBox>
+        </HBox>
+        <HBox alignment="CENTER" spacing="10.0">
+            <HBox fx:id="storeCard" alignment="CENTER" prefWidth="160.0" style="-fx-background-color: WHITE">
+                <VBox alignment="TOP_CENTER">
+                    <Label prefHeight="54.0" text="Store used">
+                        <font>
+                            <Font size="14.0" />
+                        </font>
+                    </Label>
+                    <JFXSpinner fx:id="store" prefHeight="100.0" prefWidth="100.0" progress="0.0" radius="100.0">
+                        <VBox.margin>
+                            <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                        </VBox.margin>
+                    </JFXSpinner>
+                </VBox>
+            </HBox>
+            <HBox fx:id="memoryCard" alignment="CENTER" prefWidth="160.0" style="-fx-background-color: WHITE">
+                <VBox alignment="TOP_CENTER">
+                    <Label prefHeight="54.0" text="Memory used">
+                        <font>
+                            <Font size="14.0" />
+                        </font>
+                    </Label>
+                    <JFXSpinner fx:id="memory" prefHeight="100.0" prefWidth="100.0" progress="0.0" radius="100.0">
+                        <VBox.margin>
+                            <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                        </VBox.margin>
+                    </JFXSpinner>
+                </VBox>
+            </HBox>
+            <HBox fx:id="tempCard" alignment="CENTER" prefWidth="160.0" style="-fx-background-color: WHITE">
+                <VBox alignment="TOP_CENTER">
+                    <Label prefHeight="54.0" text="Temp used">
+                        <font>
+                            <Font size="14.0" />
+                        </font>
+                    </Label>
+                    <JFXSpinner fx:id="temp" prefHeight="100.0" prefWidth="100.0" progress="0.0" radius="100.0" style="-fx-fill: #ff0000; -fx-stroke: #00ff00;">
+                        <VBox.margin>
+                            <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                        </VBox.margin>
+                    </JFXSpinner>
+                </VBox>
+            </HBox>
+            <VBox.margin>
+                <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+            </VBox.margin>
+        </HBox>
+    </VBox>
 </VBox>
