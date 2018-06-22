@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import com.jfoenix.controls.JFXButton?>
+<?import de.jensd.fx.glyphs.materialdesignicons.MaterialDesignIconView?>
 <?import de.jensd.fx.glyphs.octicons.OctIconView?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
@@ -23,6 +24,18 @@
                     </image>
                 </ImageView>
             </HBox>
+            <JFXButton id="broker" text="Broker" onAction="#showBrokerView"
+                       prefWidth="220.0" prefHeight="54.0"
+                       textFill="#fbfbfb"
+                       alignment="BASELINE_LEFT">
+                <font>
+                    <Font size="14.0"/>
+                </font>
+                <graphic>
+                    <MaterialDesignIconView glyphName="CHART_PIE" wrappingWidth="28.0" size="18" fill="#fbfbfb"
+                                            textAlignment="CENTER"/>
+                </graphic>
+            </JFXButton>
         </VBox>
         <JFXButton id="info" text=" " onAction="#showInfoView"
                    prefWidth="220.0" prefHeight="54.0"

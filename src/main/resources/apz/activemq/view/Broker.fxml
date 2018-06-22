@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<VBox xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
+      fx:controller="apz.activemq.controller.BrokerController"
+      fx:id="root"
+      AnchorPane.topAnchor="0.0" AnchorPane.rightAnchor="0.0"
+      AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0">
+    <Label id="title" maxWidth="Infinity" minHeight="84.0" style="-fx-background-color: #fbfbfb;" text="BROKER">
+        <font>
+            <Font name="System Bold" size="28.0" />
+        </font>
+        <padding>
+            <Insets left="30.0" top="10.0" />
+        </padding>
+    </Label>
+</VBox>

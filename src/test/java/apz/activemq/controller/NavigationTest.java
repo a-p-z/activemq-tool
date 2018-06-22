@@ -14,8 +14,8 @@ import org.testfx.framework.junit.ApplicationTest;
 import static apz.activemq.controller.ControllerFactory.newInstance;
 import static apz.activemq.injection.Injector.clearRegistry;
 import static apz.activemq.injection.Injector.register;
+import static apz.activemq.utils.AssertUtils.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.verifyZeroInteractions;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -48,9 +48,17 @@ public class NavigationTest extends ApplicationTest {
 
         // then
         final Label title = lookup("#title").query();
-
         verifyZeroInteractions(hostServices);
+        assertThat("title should be INFO", title::getText, is("INFO"));
+    }
 
-        assertThat("title should be INFO", title.getText(), is("INFO"));
+    @Test
+    public void whenClickOnBrokerTitleShouldBeBroker() {
+        // when
+        clickOn("#broker");
+
+        // then
+        final Label title = lookup("#title").query();
+        assertThat("title should be BROKER", title::getText, is("BROKER"));
     }
 }

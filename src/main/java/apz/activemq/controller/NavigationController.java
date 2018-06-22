@@ -19,15 +19,26 @@ public class NavigationController implements Initializable {
     @FXML
     private AnchorPane container;
 
+    private final BrokerController brokerController;
     private final InfoController infoController;
 
     public NavigationController() {
+        brokerController = ControllerFactory.newInstance(BrokerController.class);
         infoController = ControllerFactory.newInstance(InfoController.class);
     }
 
     @Override
     public void initialize(final URL location, final ResourceBundle resources) {
         showInfoView(null);
+    }
+
+    @FXML
+    public void showBrokerView(final @Nullable ActionEvent event) {
+
+        Optional.ofNullable(event).ifPresent(Event::consume);
+
+        container.getChildren().clear();
+        container.getChildren().add(brokerController.root);
     }
 
     @FXML
