@@ -2,7 +2,10 @@ package apz.activemq.controller;
 
 import apz.activemq.injection.Inject;
 import apz.activemq.jmx.JmxClient;
+import apz.activemq.listeners.PortValidatorInputListener;
 import apz.activemq.task.ConnectTask;
+import apz.activemq.validator.JFXTextFieldRequiredValidator;
+import apz.activemq.validator.JMXServiceURLValidator;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialog;
 import com.jfoenix.controls.JFXProgressBar;
@@ -53,6 +56,19 @@ public class ConnectionController implements Initializable {
         // head
         head.setFont(font("Verdana, Helvetica, Arial, sans-serif", NORMAL, 14));
 
+        // host
+        host.getValidators().add(new JFXTextFieldRequiredValidator("host is required"));
+        host.getValidators().add(new JMXServiceURLValidator());
+
+        // when focus host reset validation
+        host.focusedProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue) {
+                host.resetValidation();
+            }
+        });
+
+        // port
+        port.textProperty().addListener(new PortValidatorInputListener(port));
     }
 
     public void show(final StackPane container) {
@@ -70,7 +86,9 @@ public class ConnectionController implements Initializable {
 
     @FXML
     private void connect() {
-        scheduledExecutorService.submit(new ConnectTask(this, jmxClient));
+        if (host.validate()) {
+            scheduledExecutorService.submit(new ConnectTask(this, jmxClient));
+        }
     }
 
     public void setConnecting(final boolean connecting) {

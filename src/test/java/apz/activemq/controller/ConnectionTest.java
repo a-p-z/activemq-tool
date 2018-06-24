@@ -4,6 +4,7 @@ import apz.activemq.jmx.JmxClient;
 import com.jfoenix.controls.JFXProgressBar;
 import com.jfoenix.controls.JFXTextField;
 import com.jfoenix.controls.events.JFXDialogEvent;
+import com.jfoenix.validation.base.ValidatorBase;
 import javafx.event.EventHandler;
 import javafx.scene.Scene;
 import javafx.scene.layout.StackPane;
@@ -15,6 +16,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.testfx.framework.junit.ApplicationTest;
 
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.function.Supplier;
 
 import static apz.activemq.controller.ControllerFactory.newInstance;
 import static apz.activemq.injection.Injector.clearRegistry;
@@ -22,6 +24,7 @@ import static apz.activemq.injection.Injector.register;
 import static apz.activemq.jmx.JmxClient.DEFAULT_PORT;
 import static apz.activemq.utils.AssertUtils.assertThat;
 import static apz.activemq.utils.AssertUtils.retry;
+import static java.util.stream.Collectors.joining;
 import static javafx.application.Platform.runLater;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
@@ -182,5 +185,66 @@ public class ConnectionTest extends ApplicationTest {
         verifyZeroInteractions(onConnectedAction);
         verify(scheduledExecutorService).submit(any(Runnable.class));
         verifyNoMoreInteractions(scheduledExecutorService);
+    }
+
+    @Test
+    public void whenClickOnConnectAndHostIsNotValidErrorShouldBeShown() {
+        // given
+        runLater(() -> connectionController.show(stackPane));
+        retry(() -> lookup("#host").queryAs(JFXTextField.class).setText("activemq.test.com/§nvalid"));
+
+        // when
+        retry(() -> clickOn("#connect"));
+
+        // then
+        final JFXTextField hostTextField = lookup("#host").query();
+        final Supplier<String> errors = () -> hostTextField.getValidators().stream()
+                .filter(ValidatorBase::getHasErrors)
+                .map(ValidatorBase::getMessage)
+                .collect(joining(", "));
+        verifyZeroInteractions(jmxClient);
+        verifyZeroInteractions(onConnectedAction);
+        verifyZeroInteractions(scheduledExecutorService);
+        assertThat("error message should be 'Service URL contains non-ASCII character 0xa7'", errors,
+                is("Service URL contains non-ASCII character 0xa7"));
+    }
+
+    @Test
+    public void whenClickOnConnectAndHostIsEmptyErrorShouldBeShown() {
+        // given
+        runLater(() -> connectionController.show(stackPane));
+
+        // when
+        retry(() -> clickOn("#connect"));
+
+        // then
+        final Supplier<String> errors = () -> lookup("#host").queryAs(JFXTextField.class)
+                .getValidators().stream()
+                .filter(ValidatorBase::getHasErrors)
+                .map(ValidatorBase::getMessage)
+                .collect(joining(", "));
+        verifyZeroInteractions(jmxClient);
+        verifyZeroInteractions(onConnectedAction);
+        verifyZeroInteractions(scheduledExecutorService);
+        assertThat("error message should be 'host is required'", errors, is("host is required"));
+    }
+
+    @Test
+    public void whenFocusOnHostErrorMessageShouldBeReset() {
+        // given
+        runLater(() -> connectionController.show(stackPane));
+        retry(() -> clickOn("#connect"));
+
+        // when
+        retry(() -> clickOn("#host"));
+
+        // then
+        final JFXTextField hostTextField = lookup("#host").query();
+        final Supplier<Boolean> hasErrors = () -> hostTextField.getValidators().stream()
+                .noneMatch(ValidatorBase::getHasErrors);
+        verifyZeroInteractions(jmxClient);
+        verifyZeroInteractions(onConnectedAction);
+        verifyZeroInteractions(scheduledExecutorService);
+        assertThat("error message should be reset", hasErrors, is(false));
     }
 }
