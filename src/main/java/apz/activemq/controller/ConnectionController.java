@@ -1,5 +1,8 @@
 package apz.activemq.controller;
 
+import apz.activemq.injection.Inject;
+import apz.activemq.jmx.JmxClient;
+import apz.activemq.jmx.exception.JmxConnectionException;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialog;
 import com.jfoenix.controls.JFXTextField;
@@ -9,14 +12,21 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.URL;
 import java.util.ResourceBundle;
 
+import static apz.activemq.jmx.JmxClient.DEFAULT_PORT;
+import static java.lang.Integer.parseInt;
+import static javafx.application.Platform.runLater;
 import static javafx.scene.text.Font.font;
 import static javafx.scene.text.FontWeight.NORMAL;
 
 public class ConnectionController implements Initializable {
+
+    private final static Logger LOGGER = LoggerFactory.getLogger(ConnectionController.class);
 
     @FXML
     private JFXDialog dialog;
@@ -33,6 +43,8 @@ public class ConnectionController implements Initializable {
     @FXML
     private JFXButton connect;
 
+    @Inject
+    private JmxClient jmxClient;
 
     public void initialize(final URL location, final ResourceBundle resources) {
         // head
@@ -57,6 +69,22 @@ public class ConnectionController implements Initializable {
 
     @FXML
     private void connect() {
-        dialog.close();
+
+        try {
+            final String host = this.host.getText().trim();
+            final Integer port = !this.port.getText().isEmpty() ? parseInt(this.port.getText()) : DEFAULT_PORT;
+
+            jmxClient.connect(host, port);
+            dialog.close();
+
+        } catch (final JmxConnectionException e) {
+            LOGGER.error("Error connecting to " + host + ":" + port, e);
+        } finally {
+            runLater(() -> {
+                host.setDisable(false);
+                connect.setDisable(false);
+                port.setDisable(false);
+            });
+        }
     }
 }
