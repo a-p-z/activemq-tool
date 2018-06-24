@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import com.jfoenix.controls.*?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<JFXDialog xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
+           fx:id="dialog" fx:controller="apz.activemq.controller.ConnectionController"
+           transitionType="CENTER" overlayClose="false" style="-fx-background-color: TRANSPARENT;">
+    <JFXDialogLayout>
+        <heading>
+            <Label fx:id="head" text="Add JMX connection">
+                <font>
+                    <Font size="14.0"/>
+                </font>
+            </Label>
+        </heading>
+        <body>
+            <VBox spacing="40" alignment="CENTER">
+                <JFXTextField fx:id="host" promptText="Connection host" labelFloat="true"/>
+                <JFXTextField fx:id="port" promptText="Connection port" labelFloat="true"/>
+            </VBox>
+        </body>
+        <actions>
+            <JFXButton fx:id="connect" styleClass="dialog-accept" text="Connect" onAction="#connect"/>
+        </actions>
+    </JFXDialogLayout>
+</JFXDialog>

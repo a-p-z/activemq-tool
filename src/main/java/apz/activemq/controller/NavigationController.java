@@ -11,6 +11,8 @@ import java.net.URL;
 import java.util.Optional;
 import java.util.ResourceBundle;
 
+import static apz.activemq.controller.ControllerFactory.newInstance;
+
 public class NavigationController implements Initializable {
 
     @FXML
@@ -23,13 +25,12 @@ public class NavigationController implements Initializable {
     private final InfoController infoController;
 
     public NavigationController() {
-        brokerController = ControllerFactory.newInstance(BrokerController.class);
-        infoController = ControllerFactory.newInstance(InfoController.class);
+        brokerController = newInstance(BrokerController.class);
+        infoController = newInstance(InfoController.class);
     }
 
     @Override
     public void initialize(final URL location, final ResourceBundle resources) {
-        showInfoView(null);
     }
 
     @FXML

@@ -2,8 +2,8 @@ package apz.activemq.utils;
 
 import org.apache.activemq.broker.jmx.BrokerViewMBean;
 
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.when;
 
 public class MockUtils {
 
@@ -18,13 +18,13 @@ public class MockUtils {
 
         final BrokerViewMBean brokerViewMBean = spy(BrokerViewMBean.class);
 
-        when(brokerViewMBean.getBrokerId()).thenReturn(id);
-        when(brokerViewMBean.getBrokerName()).thenReturn(name);
-        when(brokerViewMBean.getBrokerVersion()).thenReturn(version);
-        when(brokerViewMBean.getUptime()).thenReturn(uptime);
-        when(brokerViewMBean.getStorePercentUsage()).thenReturn(storePercentUsage);
-        when(brokerViewMBean.getMemoryPercentUsage()).thenReturn(memoryPercentUsage);
-        when(brokerViewMBean.getTempPercentUsage()).thenReturn(tempPercentUsage);
+        given(brokerViewMBean.getBrokerId()).willReturn(id);
+        given(brokerViewMBean.getBrokerName()).willReturn(name);
+        given(brokerViewMBean.getBrokerVersion()).willReturn(version);
+        given(brokerViewMBean.getUptime()).willReturn(uptime);
+        given(brokerViewMBean.getStorePercentUsage()).willReturn(storePercentUsage);
+        given(brokerViewMBean.getMemoryPercentUsage()).willReturn(memoryPercentUsage);
+        given(brokerViewMBean.getTempPercentUsage()).willReturn(tempPercentUsage);
 
         return brokerViewMBean;
     }

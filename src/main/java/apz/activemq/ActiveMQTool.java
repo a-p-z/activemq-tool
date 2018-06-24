@@ -1,5 +1,6 @@
 package apz.activemq;
 
+import apz.activemq.controller.ConnectionController;
 import apz.activemq.controller.NavigationController;
 import javafx.application.Application;
 import javafx.scene.Scene;
@@ -27,8 +28,11 @@ public class ActiveMQTool extends Application {
         configureJmxClient();
 
         final NavigationController navigationController = newInstance(NavigationController.class);
+        final ConnectionController connectionController = newInstance(ConnectionController.class);
 
         stackPane.getChildren().add(navigationController.root);
+        connectionController.setOnConnected(event -> navigationController.showBrokerView(null));
+        connectionController.show(stackPane);
 
         stage.setTitle("ActiveMQ Tool");
         stage.getIcons().add(new Image("img/activemq-title-icon.png"));
