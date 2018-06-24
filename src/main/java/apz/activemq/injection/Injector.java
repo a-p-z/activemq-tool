@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import java.lang.reflect.Field;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.stream.Stream;
 
 import static java.util.Arrays.stream;
@@ -65,6 +66,7 @@ public class Injector {
      * The registry will be empty after this call returns.
      */
     public static void clearRegistry() {
+        get("scheduledExecutorService", ScheduledExecutorService.class).shutdown();
         REGISTRY.clear();
     }
 

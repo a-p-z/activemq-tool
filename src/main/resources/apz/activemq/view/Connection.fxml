@@ -25,5 +25,6 @@
         <actions>
             <JFXButton fx:id="connect" styleClass="dialog-accept" text="Connect" onAction="#connect"/>
         </actions>
+        <JFXProgressBar fx:id="progressBar" progress="0.0" visible="false"/>
     </JFXDialogLayout>
 </JFXDialog>

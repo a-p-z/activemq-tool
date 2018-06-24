@@ -7,8 +7,11 @@ import javafx.application.Application;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.concurrent.ScheduledExecutorService;
+
 import static apz.activemq.Configuration.configureHostServices;
 import static apz.activemq.Configuration.configureJmxClient;
+import static apz.activemq.Configuration.configureScheduledExecutorService;
 import static apz.activemq.injection.Injector.clearRegistry;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
@@ -42,5 +45,16 @@ public class ConfigurationTest {
         final JmxClient registeredJmxClient = Injector.get("jmxClient", JmxClient.class);
         assertThat("jmxClient should not be null", jmxClient, notNullValue());
         assertThat("jmxClient should be equal to registered jmxClient", jmxClient, is(registeredJmxClient));
+    }
+
+    @Test
+    public void whenConfigureScheduledExecutorServiceItShouldBeRegistered() {
+        // when
+        final ScheduledExecutorService scheduledExecutorService = configureScheduledExecutorService();
+
+        // then
+        final ScheduledExecutorService registeredScheduledExecutorService = Injector.get("scheduledExecutorService", ScheduledExecutorService.class);
+        assertThat("scheduledExecutorService should not be null", scheduledExecutorService, notNullValue());
+        assertThat("scheduledExecutorService should be equal to registered scheduledExecutorService", scheduledExecutorService, is(registeredScheduledExecutorService));
     }
 }
