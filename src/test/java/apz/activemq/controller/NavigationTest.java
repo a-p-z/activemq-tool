@@ -78,4 +78,16 @@ public class NavigationTest extends ApplicationTest {
         then(jmxClient).shouldHaveNoMoreInteractions();
         assertThat("title should be BROKER", title::getText, is("BROKER"));
     }
+
+    @Test
+    public void whenClickOnQueuesTitleShouldBeQueues() {
+        // when
+        clickOn("#queues");
+
+        // then
+        final Label title = lookup("#title").query();
+        then(hostServices).shouldHaveZeroInteractions();
+        then(jmxClient).shouldHaveZeroInteractions();
+        assertThat("title should be QUEUES", title::getText, is("QUEUES"));
+    }
 }

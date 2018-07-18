@@ -22,10 +22,12 @@ public class NavigationController implements Initializable {
     private AnchorPane container;
 
     private final BrokerController brokerController;
+    private final QueuesController queuesController;
     private final InfoController infoController;
 
     public NavigationController() {
         brokerController = newInstance(BrokerController.class);
+        queuesController = newInstance(QueuesController.class);
         infoController = newInstance(InfoController.class);
     }
 
@@ -41,6 +43,13 @@ public class NavigationController implements Initializable {
         container.getChildren().clear();
         container.getChildren().add(brokerController.root);
         brokerController.refresh(null);
+    }
+
+    @FXML
+    public void showQueuesView(final @Nullable ActionEvent event) {
+        Optional.ofNullable(event).ifPresent(Event::consume);
+        container.getChildren().clear();
+        container.getChildren().add(queuesController.root);
     }
 
     @FXML
