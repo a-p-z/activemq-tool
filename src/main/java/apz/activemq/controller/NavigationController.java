@@ -50,6 +50,7 @@ public class NavigationController implements Initializable {
         Optional.ofNullable(event).ifPresent(Event::consume);
         container.getChildren().clear();
         container.getChildren().add(queuesController.root);
+        queuesController.refresh(null);
     }
 
     @FXML

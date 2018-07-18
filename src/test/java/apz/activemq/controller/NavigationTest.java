@@ -13,12 +13,15 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.testfx.framework.junit.ApplicationTest;
 
+import java.util.concurrent.ScheduledExecutorService;
+
 import static apz.activemq.controller.ControllerFactory.newInstance;
 import static apz.activemq.injection.Injector.clearRegistry;
 import static apz.activemq.injection.Injector.register;
 import static apz.activemq.utils.AssertUtils.assertThat;
 import static apz.activemq.utils.MockUtils.spyBrokerViewMBean;
 import static org.hamcrest.Matchers.is;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 
@@ -31,6 +34,9 @@ public class NavigationTest extends ApplicationTest {
     @Mock
     private JmxClient jmxClient;
 
+    @Mock
+    private ScheduledExecutorService scheduledExecutorService;
+
     @Override
     public void start(final Stage stage) {
 
@@ -40,6 +46,7 @@ public class NavigationTest extends ApplicationTest {
         clearRegistry();
         register("hostServices", hostServices);
         register("jmxClient", jmxClient);
+        register("scheduledExecutorService", scheduledExecutorService);
 
         final NavigationController navigationController = newInstance(NavigationController.class);
 
@@ -59,6 +66,7 @@ public class NavigationTest extends ApplicationTest {
         final Label title = lookup("#title").query();
         then(hostServices).shouldHaveZeroInteractions();
         then(jmxClient).shouldHaveZeroInteractions();
+        then(scheduledExecutorService).shouldHaveZeroInteractions();
         assertThat("title should be INFO", title::getText, is("INFO"));
     }
 
@@ -76,6 +84,7 @@ public class NavigationTest extends ApplicationTest {
         then(hostServices).shouldHaveZeroInteractions();
         then(jmxClient).should().getBroker();
         then(jmxClient).shouldHaveNoMoreInteractions();
+        then(scheduledExecutorService).shouldHaveZeroInteractions();
         assertThat("title should be BROKER", title::getText, is("BROKER"));
     }
 
@@ -88,6 +97,8 @@ public class NavigationTest extends ApplicationTest {
         final Label title = lookup("#title").query();
         then(hostServices).shouldHaveZeroInteractions();
         then(jmxClient).shouldHaveZeroInteractions();
+        then(scheduledExecutorService).should().submit(any(Runnable.class));
+        then(scheduledExecutorService).shouldHaveNoMoreInteractions();
         assertThat("title should be QUEUES", title::getText, is("QUEUES"));
     }
 }

@@ -1,7 +1,8 @@
 package apz.activemq.utils;
 
 import org.hamcrest.Matcher;
-import org.hamcrest.MatcherAssert;
+import org.junit.Assert;
+import org.junit.Assume;
 
 import java.util.function.Supplier;
 
@@ -30,7 +31,11 @@ public class AssertUtils {
         runnable.run();
     }
 
+    public static <T> void assumeThat(final String reason, final Supplier<T> actual, final Matcher<? super T> matcher) {
+        retry(() -> Assume.assumeThat(reason, actual.get(), matcher));
+    }
+
     public static <T> void assertThat(final String reason, final Supplier<T> actual, final Matcher<? super T> matcher) {
-        retry(() -> MatcherAssert.assertThat(reason, actual.get(), matcher));
+        retry(() -> Assert.assertThat(reason, actual.get(), matcher));
     }
 }

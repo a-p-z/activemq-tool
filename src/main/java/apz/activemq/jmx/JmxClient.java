@@ -3,6 +3,7 @@ package apz.activemq.jmx;
 import apz.activemq.jmx.exception.JmxConnectionException;
 import apz.activemq.jmx.exception.JmxConnectionNotInitializedError;
 import org.apache.activemq.broker.jmx.BrokerViewMBean;
+import org.apache.activemq.broker.jmx.QueueViewMBean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,9 +14,14 @@ import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
 import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 import static java.lang.String.format;
+import static java.util.Arrays.stream;
+import static java.util.stream.Collectors.collectingAndThen;
+import static java.util.stream.Collectors.toList;
 import static javax.management.MBeanServerInvocationHandler.newProxyInstance;
 
 public class JmxClient {
@@ -57,5 +63,20 @@ public class JmxClient {
         LOGGER.info("getting broker from server");
 
         return Optional.ofNullable(broker).orElseThrow(JmxConnectionNotInitializedError::new);
+    }
+
+    public List<QueueViewMBean> getQueues() {
+
+        final BrokerViewMBean broker = getBroker();
+
+        LOGGER.info("getting queues from {}", broker.getBrokerId());
+
+        final List<QueueViewMBean> queues = stream(broker.getQueues())
+                .map(objectName -> newProxyInstance(connection, objectName, QueueViewMBean.class, true))
+                .collect(collectingAndThen(toList(), Collections::unmodifiableList));
+
+        LOGGER.info("{} queues found in {}", queues.size(), broker.getBrokerId());
+
+        return queues;
     }
 }
