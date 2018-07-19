@@ -16,6 +16,9 @@ import org.testfx.framework.junit.ApplicationTest;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.stream.IntStream;
 
 import static apz.activemq.Configuration.configureScheduledExecutorService;
 import static apz.activemq.controller.ControllerFactory.newInstance;
@@ -118,6 +121,34 @@ public class QueuesTest extends ApplicationTest {
         verifyNoMoreInteractions(jmxClient);
         assertThat("table should have 50 rows", table.getRoot()::getChildren, hasSize(50));
         assertThat("last row should be 'queue.test.alabama'", table.getRoot().getChildren().get(49).getValue().name::getValue, is("queue.test.alabama"));
+    }
+
+    @Test
+    public void whenSortTableAndValuesChangeSortShouldBeMaintained() {
+        // given
+        final JFXTreeTableView<Queue> table = lookup("#table").query();
+        final List<QueueViewMBean> queueViewMBeans1 = spyQueueViewMBean(50L, 0L, 100L);
+        final List<QueueViewMBean> queueViewMBeans2 = spyQueueViewMBean(50L, 0L, 100L);
+        given(jmxClient.getQueues())
+                .willReturn(queueViewMBeans1)
+                .willReturn(queueViewMBeans2);
+        initializeTable(table);
+
+        // when
+        clickOn("#pending.column-header");
+        clickOn("#refresh");
+
+        // then
+        final Function<Integer, String> queue = i -> table.getRoot().getChildren().get(i).getValue().name.getValue();
+        verify(jmxClient, times(2)).getQueues();
+        verifyNoMoreInteractions(jmxClient);
+        assertThat("table should have 50 rows", table.getRoot()::getChildren, hasSize(50));
+        IntStream.range(0, 49).boxed().forEach(i -> {
+            final Supplier<Boolean> compare = () -> table.getRoot().getChildren().get(i).getValue().pending.getValue() <
+                    table.getRoot().getChildren().get(i + 1).getValue().pending.getValue();
+            assertThat("pending messages of '" + queue.apply(i) + "' should less or equal than pending messages of '" + queue.apply(i + 1) + "'",
+                    compare, is(true));
+        });
     }
 
     private void initializeTable(final JFXTreeTableView<Queue> table) {

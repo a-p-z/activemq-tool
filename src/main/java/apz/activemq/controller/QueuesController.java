@@ -25,6 +25,7 @@ import java.util.ResourceBundle;
 import java.util.concurrent.ScheduledExecutorService;
 
 import static apz.activemq.util.Utils.setupCellValueFactory;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.stream.Collectors.collectingAndThen;
 import static java.util.stream.Collectors.toList;
 import static javafx.application.Platform.runLater;
@@ -121,6 +122,8 @@ public class QueuesController implements Initializable {
                     queues.stream()
                             .map(q -> (Runnable) q::refresh)
                             .forEach(q -> scheduledExecutorService.submit(q));
+
+                    scheduledExecutorService.schedule(() -> runLater(() -> table.sort()), 300, MILLISECONDS);
                 });
 
                 return null;
