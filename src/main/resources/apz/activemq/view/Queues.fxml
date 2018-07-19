@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import com.jfoenix.controls.JFXButton?>
+<?import com.jfoenix.controls.JFXProgressBar?>
 <?import com.jfoenix.controls.JFXTreeTableColumn?>
 <?import com.jfoenix.controls.JFXTreeTableView?>
 <?import de.jensd.fx.glyphs.materialdesignicons.MaterialDesignIconView?>
@@ -11,7 +12,6 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
-
 <StackPane xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
            fx:id="root" fx:controller="apz.activemq.controller.QueuesController"
            AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0"
@@ -26,6 +26,7 @@
                 <Insets left="30.0" top="10.0" />
             </padding>
         </Label>
+        <JFXProgressBar fx:id="progressBar" maxWidth="Infinity" progress="0" />
         <HBox>
             <JFXButton id="refresh" onMouseClicked="#refresh">
                 <graphic>

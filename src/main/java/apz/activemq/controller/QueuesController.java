@@ -4,6 +4,7 @@ import apz.activemq.injection.Inject;
 import apz.activemq.jmx.JmxClient;
 import apz.activemq.listeners.QueuesTableSkinListener;
 import apz.activemq.model.Queue;
+import com.jfoenix.controls.JFXProgressBar;
 import com.jfoenix.controls.JFXTreeTableColumn;
 import com.jfoenix.controls.JFXTreeTableView;
 import com.jfoenix.controls.RecursiveTreeItem;
@@ -35,6 +36,9 @@ public class QueuesController implements Initializable {
 
     @FXML
     public StackPane root;
+
+    @FXML
+    private JFXProgressBar progressBar;
 
     @FXML
     private JFXTreeTableView<Queue> table;
@@ -97,9 +101,13 @@ public class QueuesController implements Initializable {
             @Override
             protected Void call() {
 
+                runLater(() -> progressBar.setProgress(-1.0));
+
                 final List<Queue> jmxQueues = jmxClient.getQueues().stream()
                         .map(Queue::new)
                         .collect(collectingAndThen(toList(), Collections::unmodifiableList));
+
+                runLater(() -> progressBar.setProgress(-0.0));
 
                 final List<String> jmxQueueNames = jmxQueues.stream()
                         .map(q -> q.name.getValue())
@@ -124,6 +132,8 @@ public class QueuesController implements Initializable {
                             .forEach(q -> scheduledExecutorService.submit(q));
 
                     scheduledExecutorService.schedule(() -> runLater(() -> table.sort()), 300, MILLISECONDS);
+
+                    progressBar.setProgress(0.0);
                 });
 
                 return null;
