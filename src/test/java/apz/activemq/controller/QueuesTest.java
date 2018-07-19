@@ -27,6 +27,8 @@ import static apz.activemq.injection.Injector.register;
 import static apz.activemq.utils.AssertUtils.assertThat;
 import static apz.activemq.utils.AssertUtils.assumeThat;
 import static apz.activemq.utils.MockUtils.spyQueueViewMBean;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.BDDMockito.given;
@@ -144,10 +146,83 @@ public class QueuesTest extends ApplicationTest {
         verifyNoMoreInteractions(jmxClient);
         assertThat("table should have 50 rows", table.getRoot()::getChildren, hasSize(50));
         IntStream.range(0, 49).boxed().forEach(i -> {
-            final Supplier<Boolean> compare = () -> table.getRoot().getChildren().get(i).getValue().pending.getValue() <
+            final Supplier<Boolean> compare = () -> table.getRoot().getChildren().get(i).getValue().pending.getValue() <=
                     table.getRoot().getChildren().get(i + 1).getValue().pending.getValue();
             assertThat("pending messages of '" + queue.apply(i) + "' should less or equal than pending messages of '" + queue.apply(i + 1) + "'",
                     compare, is(true));
+        });
+    }
+
+    @Test
+    public void whenSearchOneQueueOneResultShouldBeShown() {
+        // given
+        final JFXTreeTableView<Queue> table = lookup("#table").query();
+        final List<QueueViewMBean> queueViewMBeans = spyQueueViewMBean(50L, 0L, 100L);
+        given(jmxClient.getQueues()).willReturn(queueViewMBeans);
+        initializeTable(table);
+
+        // when
+        clickOn("#search")
+                .write("alaska");
+
+        // then
+        verify(jmxClient).getQueues();
+        verifyNoMoreInteractions(jmxClient);
+        assertThat("table should have 1 row", table.getRoot()::getChildren, hasSize(1));
+        assertThat("the first row should be 'queue.test.alaska'", table.getRoot().getChildren().get(0).getValue().name::getValue, is("queue.test.alaska"));
+    }
+
+    @Test
+    public void whenSearchIsGenericMultipleResultShouldBeShown() {
+        // given
+        final JFXTreeTableView<Queue> table = lookup("#table").query();
+        final List<QueueViewMBean> queueViewMBeans = spyQueueViewMBean(50L, 0L, 100L);
+        given(jmxClient.getQueues()).willReturn(queueViewMBeans);
+        initializeTable(table);
+
+        // when
+        clickOn("#search")
+                .write("al");
+
+        // then
+        verify(jmxClient).getQueues();
+        verifyNoMoreInteractions(jmxClient);
+        assertThat("table should have 3 row", table.getRoot()::getChildren, hasSize(3));
+        assertThat("the first row should be 'queue.test.alabama'", table.getRoot().getChildren().get(0).getValue().name::getValue, is("queue.test.alabama"));
+        assertThat("the second row should be 'queue.test.alaska'", table.getRoot().getChildren().get(1).getValue().name::getValue, is("queue.test.alaska"));
+        assertThat("the third row should be 'queue.test.california'", table.getRoot().getChildren().get(2).getValue().name::getValue, is("queue.test.california"));
+    }
+
+    @Test
+    public void whenSearchSortAndRefreshFilterShouldBeAppliedAndSortMaintained() {
+        // given
+        final JFXTreeTableView<Queue> table = lookup("#table").query();
+        final List<QueueViewMBean> queueViewMBeans1 = new ArrayList<>(spyQueueViewMBean(50L, 0L, 100L));
+        final List<QueueViewMBean> queueViewMBeans2 = spyQueueViewMBean(50L, 0L, 100L);
+        queueViewMBeans1.remove(0);
+        given(jmxClient.getQueues())
+                .willReturn(queueViewMBeans1)
+                .willReturn(queueViewMBeans2);
+        queuesController.refresh(null);
+
+        // when
+        clickOn("#search")
+                .write("test.a");
+        clickOn("#pending.column-header");
+        clickOn("#refresh");
+
+        // then
+        final Function<Integer, Queue> queue = i -> table.getRoot().getChildren().get(i).getValue();
+        verify(jmxClient, times(2)).getQueues();
+        verifyNoMoreInteractions(jmxClient);
+        assertThat("table should have 4 row", table.getRoot()::getChildren, hasSize(4));
+        assertThat("the first row should contain 'test.a'", table.getRoot().getChildren().get(0).getValue().name::getValue, containsString("test.a"));
+        assertThat("the second row should contain 'test.a'", table.getRoot().getChildren().get(1).getValue().name::getValue, containsString("test.a"));
+        assertThat("the third row should contain 'test.a'", table.getRoot().getChildren().get(2).getValue().name::getValue, containsString("test.a"));
+        assertThat("the fourth row should contain 'test.a'", table.getRoot().getChildren().get(3).getValue().name::getValue, containsString("test.a"));
+        IntStream.range(0, 3).boxed().forEach(i -> {
+            final Supplier<Long> pending = () -> queue.apply(i + 1).pending.getValue() - queue.apply(i).pending.getValue();
+            assertThat("pending messages of '" + queue.apply(i).name.getValue() + "' should less or equal than pending messages of '" + queue.apply(i + 1).name.getValue() + "'", pending, greaterThanOrEqualTo(0L));
         });
     }
 

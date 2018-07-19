@@ -7,11 +7,13 @@
 <?import de.jensd.fx.glyphs.materialdesignicons.MaterialDesignIconView?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
+
 <StackPane xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
            fx:id="root" fx:controller="apz.activemq.controller.QueuesController"
            AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0"
@@ -36,6 +38,10 @@
             </JFXButton>
         </HBox>
         <VBox spacing="10.0" VBox.vgrow="ALWAYS">
+            <TextField fx:id="search" prefHeight="40.0" promptText="Search..." style="-fx-background-radius: 0;">
+                <font>
+                    <Font size="16.0" />
+                </font></TextField>
             <JFXTreeTableView fx:id="table" VBox.vgrow="ALWAYS">
                 <columns>
                     <JFXTreeTableColumn fx:id="name" editable="false" minWidth="400.0" style="-fx-alignment: TOP-LEFT; -fx-padding: 16 16 16 16;" text="Name" />

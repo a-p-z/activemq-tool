@@ -9,12 +9,14 @@ import com.jfoenix.controls.JFXTreeTableColumn;
 import com.jfoenix.controls.JFXTreeTableView;
 import com.jfoenix.controls.RecursiveTreeItem;
 import com.jfoenix.controls.datamodels.treetable.RecursiveTreeObject;
+import javafx.beans.value.ChangeListener;
 import com.sun.istack.internal.Nullable;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.event.Event;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.control.TextField;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.StackPane;
 
@@ -39,6 +41,9 @@ public class QueuesController implements Initializable {
 
     @FXML
     private JFXProgressBar progressBar;
+
+    @FXML
+    private TextField search;
 
     @FXML
     private JFXTreeTableView<Queue> table;
@@ -69,10 +74,17 @@ public class QueuesController implements Initializable {
     @Override
     public void initialize(final URL location, final ResourceBundle resources) {
 
+        // search bar: when search test change apply filter
+        search.textProperty().addListener(applyFilter());
+
         // table
         table.setShowRoot(false);
         table.skinProperty().addListener(new QueuesTableSkinListener(table, 49));
         table.setRoot(new RecursiveTreeItem<>(queues, RecursiveTreeObject::getChildren));
+
+        // when table predicate change sort rows
+        table.predicateProperty().addListener((observable, oldValue, newValue) -> scheduledExecutorService.schedule(() ->
+                runLater(() -> table.sort()), 300, MILLISECONDS));
 
         // columns binding
         name.setContextMenu(null);
@@ -131,7 +143,10 @@ public class QueuesController implements Initializable {
                             .map(q -> (Runnable) q::refresh)
                             .forEach(q -> scheduledExecutorService.submit(q));
 
-                    scheduledExecutorService.schedule(() -> runLater(() -> table.sort()), 300, MILLISECONDS);
+                    scheduledExecutorService.schedule(() -> runLater(() -> {
+                        table.sort();
+                        applyFilter().changed(search.textProperty(), search.getText(), search.getText());
+                    }), 300, MILLISECONDS);
 
                     progressBar.setProgress(0.0);
                 });
@@ -141,5 +156,16 @@ public class QueuesController implements Initializable {
         };
 
         scheduledExecutorService.submit(task);
+    }
+
+    /**
+     * when text search change update the table predicate
+     *
+     * @return change listener
+     */
+    private ChangeListener<String> applyFilter() {
+
+        return (observable, oldValue, newValue) -> table.setPredicate(item ->
+                item.getValue().name.get().toLowerCase().contains(newValue.trim().toLowerCase()));
     }
 }
