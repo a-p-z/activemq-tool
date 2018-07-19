@@ -98,8 +98,15 @@ public class BrokerController implements Initializable {
         final BrokerViewMBean brokerViewMBean = jmxClient.getBroker();
 
         runLater(() -> {
-            broker.refresh(brokerViewMBean);
-            refresh.setDisable(false);
+            try {
+                broker.refresh(brokerViewMBean);
+
+            } catch (final RuntimeException e) {
+                LOGGER.error("error refreshing broker", e);
+
+            } finally {
+                refresh.setDisable(false);
+            }
         });
     }
 }

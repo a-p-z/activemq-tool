@@ -6,9 +6,8 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import org.apache.activemq.broker.jmx.BrokerViewMBean;
 
+import javax.annotation.Nonnull;
 import java.util.Objects;
-
-import static java.util.Objects.requireNonNull;
 
 public class Broker {
 
@@ -20,9 +19,7 @@ public class Broker {
     public final DoubleProperty memory = new SimpleDoubleProperty();
     public final DoubleProperty temp = new SimpleDoubleProperty();
 
-    public void refresh(final BrokerViewMBean brokerView) {
-
-        requireNonNull(brokerView, "brokerView must be not null");
+    public void refresh(final @Nonnull BrokerViewMBean brokerView) {
 
         name.setValue(brokerView.getBrokerName());
         version.setValue(brokerView.getBrokerVersion());

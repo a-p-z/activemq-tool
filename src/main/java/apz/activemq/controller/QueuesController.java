@@ -2,6 +2,7 @@ package apz.activemq.controller;
 
 import apz.activemq.injection.Inject;
 import apz.activemq.jmx.JmxClient;
+import apz.activemq.listeners.QueuesTableSkinListener;
 import apz.activemq.model.Queue;
 import com.jfoenix.controls.JFXTreeTableColumn;
 import com.jfoenix.controls.JFXTreeTableView;
@@ -65,7 +66,7 @@ public class QueuesController implements Initializable {
 
         // table
         table.setShowRoot(false);
-        table.setRowFactory(null);
+        table.skinProperty().addListener(new QueuesTableSkinListener(table, 49));
         table.setRoot(new RecursiveTreeItem<>(queues, RecursiveTreeObject::getChildren));
 
         // columns binding

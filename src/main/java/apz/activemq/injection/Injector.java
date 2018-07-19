@@ -5,6 +5,7 @@ import apz.activemq.injection.error.QualifierNotFoundError;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import java.lang.reflect.Field;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -12,7 +13,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.stream.Stream;
 
 import static java.util.Arrays.stream;
-import static java.util.Objects.requireNonNull;
 
 public class Injector {
 
@@ -28,10 +28,7 @@ public class Injector {
      * @param object  the object
      * @param objects external objects
      */
-    public static void resolveDependencies(final Object object, final Object... objects) {
-
-        requireNonNull(object, "object must be not null");
-        requireNonNull(objects, "objects must be not null");
+    public static void resolveDependencies(final @Nonnull Object object, final @Nonnull Object... objects) {
 
         LOGGER.debug("injecting dependencies in {}", object);
 
@@ -47,10 +44,7 @@ public class Injector {
      * @param qualifier the qualifier
      * @param object    the object to register
      */
-    public static void register(final String qualifier, final Object object) {
-
-        requireNonNull(qualifier, "qualifier must be not null");
-        requireNonNull(object, "object must be not null");
+    public static void register(final @Nonnull String qualifier, final @Nonnull Object object) {
 
         LOGGER.debug("registering {} with qualifier {}", object, qualifier);
 
@@ -66,7 +60,11 @@ public class Injector {
      * The registry will be empty after this call returns.
      */
     public static void clearRegistry() {
-        get("scheduledExecutorService", ScheduledExecutorService.class).shutdown();
+        try {
+            get("scheduledExecutorService", ScheduledExecutorService.class).shutdown();
+        } catch (final QualifierNotFoundError e) {
+            LOGGER.warn(e.getMessage());
+        }
         REGISTRY.clear();
     }
 
@@ -77,10 +75,7 @@ public class Injector {
      * @param clazz     the class of the object
      * @return the registered object
      */
-    public static <T> T get(final String qualifier, final Class<T> clazz) {
-
-        requireNonNull(qualifier, "qualifier must be not null");
-        requireNonNull(clazz, "clazz must be not null");
+    public static <T> T get(final @Nonnull String qualifier, final @Nonnull Class<T> clazz) {
 
         LOGGER.debug("getting {} with qualifier {}", clazz, qualifier);
 
@@ -98,11 +93,7 @@ public class Injector {
      * @param object  the object
      * @param objects external objects
      */
-    private static void injectAnnotatedField(final Field field, final Object object, final Object... objects) {
-
-        requireNonNull(field, "field must be not null");
-        requireNonNull(object, "object must be not null");
-        requireNonNull(objects, "objects must be not null");
+    private static void injectAnnotatedField(final @Nonnull Field field, final @Nonnull Object object, final @Nonnull Object... objects) {
 
         final Object dependency = stream(objects)
                 .filter(o -> field.getType().isInstance(o))

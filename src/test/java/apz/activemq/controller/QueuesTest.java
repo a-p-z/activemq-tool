@@ -26,10 +26,10 @@ import static apz.activemq.utils.AssertUtils.assumeThat;
 import static apz.activemq.utils.MockUtils.spyQueueViewMBean;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.Silent.class)
 public class QueuesTest extends ApplicationTest {
@@ -63,7 +63,7 @@ public class QueuesTest extends ApplicationTest {
         // given
         final List<QueueViewMBean> queueViewMBeans = spyQueueViewMBean(50L, 0L, 100L);
         final JFXTreeTableView<Queue> table = lookup("#table").query();
-        when(jmxClient.getQueues()).thenReturn(queueViewMBeans);
+        given(jmxClient.getQueues()).willReturn(queueViewMBeans);
 
         // when
         clickOn("#refresh");
@@ -83,9 +83,9 @@ public class QueuesTest extends ApplicationTest {
         final List<QueueViewMBean> queueViewMBeans1 = spyQueueViewMBean(50L, 0L, 100L);
         final List<QueueViewMBean> queueViewMBeans2 = new ArrayList<>(spyQueueViewMBean(50L, 0L, 100L));
         queueViewMBeans2.remove(0);
-        when(jmxClient.getQueues())
-                .thenReturn(queueViewMBeans1)
-                .thenReturn(queueViewMBeans2);
+        given(jmxClient.getQueues())
+                .willReturn(queueViewMBeans1)
+                .willReturn(queueViewMBeans2);
         initializeTable(table);
 
         // when
@@ -105,9 +105,9 @@ public class QueuesTest extends ApplicationTest {
         final List<QueueViewMBean> queueViewMBeans1 = new ArrayList<>(spyQueueViewMBean(50L, 0L, 100L));
         final List<QueueViewMBean> queueViewMBeans2 = spyQueueViewMBean(50L, 0L, 100L);
         queueViewMBeans1.remove(0);
-        when(jmxClient.getQueues())
-                .thenReturn(queueViewMBeans1)
-                .thenReturn(queueViewMBeans2);
+        given(jmxClient.getQueues())
+                .willReturn(queueViewMBeans1)
+                .willReturn(queueViewMBeans2);
         queuesController.refresh(null);
 
         // when

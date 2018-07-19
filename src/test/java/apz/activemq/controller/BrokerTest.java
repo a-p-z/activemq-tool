@@ -18,7 +18,6 @@ import static apz.activemq.injection.Injector.clearRegistry;
 import static apz.activemq.injection.Injector.register;
 import static apz.activemq.utils.AssertUtils.assertThat;
 import static apz.activemq.utils.MockUtils.spyBrokerViewMBean;
-import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.BDDMockito.given;
@@ -102,6 +101,5 @@ public class BrokerTest extends ApplicationTest {
         assertThat("store should be 0.0", store::getProgress, is(0.0));
         assertThat("memory should be 0.0", memory::getProgress, is(0.0));
         assertThat("temp should be 0.0", temp::getProgress, is(0.0));
-        assertThat("error-toast should be visible", lookup(".jfx-snackbar-content:error-toast")::queryAll, hasSize(1));
     }
 }
