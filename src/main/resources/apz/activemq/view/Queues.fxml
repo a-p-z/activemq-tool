@@ -51,9 +51,10 @@
                     <JFXTreeTableColumn fx:id="dequeued" editable="false" prefWidth="180.0" resizable="false" style="-fx-alignment: TOP-RIGHT; -fx-padding: 16 16 16 16;" text="Dequeued&#10;messanges" />
                 </columns>
             </JFXTreeTableView>
-            <VBox.margin>
-                <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-            </VBox.margin>
+            <Label fx:id="footer" />
+         <VBox.margin>
+            <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+         </VBox.margin>
         </VBox>
     </VBox>
 </StackPane>

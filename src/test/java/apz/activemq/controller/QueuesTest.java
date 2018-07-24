@@ -4,6 +4,7 @@ import apz.activemq.jmx.JmxClient;
 import apz.activemq.model.Queue;
 import com.jfoenix.controls.JFXTreeTableView;
 import javafx.scene.Scene;
+import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 import org.apache.activemq.broker.jmx.QueueViewMBean;
@@ -66,8 +67,9 @@ public class QueuesTest extends ApplicationTest {
     @Test
     public void whenClickOnRefreshTableShouldBePopulated() {
         // given
-        final List<QueueViewMBean> queueViewMBeans = spyQueueViewMBean(50L, 0L, 100L);
         final JFXTreeTableView<Queue> table = lookup("#table").query();
+        final Label footer = lookup("#footer").query();
+        final List<QueueViewMBean> queueViewMBeans = spyQueueViewMBean(50L, 0L, 100L);
         given(jmxClient.getQueues()).willReturn(queueViewMBeans);
 
         // when
@@ -77,6 +79,7 @@ public class QueuesTest extends ApplicationTest {
         verify(jmxClient).getQueues();
         verifyNoMoreInteractions(jmxClient);
         assertThat("table should have 50 rows", table.getRoot()::getChildren, hasSize(50));
+        assertThat("footer should be 'Showing 50 of 50 queues'", footer::getText, is("Showing 50 of 50 queues"));
         assertThat("the first row should be 'queue.test.alabama'", table.getRoot().getChildren().get(0).getValue().name::getValue, is("queue.test.alabama"));
     }
 
@@ -85,6 +88,7 @@ public class QueuesTest extends ApplicationTest {
     public void whenRemoveQueueAndClickOnRefreshTableShouldBeUpdated() {
         // given
         final JFXTreeTableView<Queue> table = lookup("#table").query();
+        final Label footer = lookup("#footer").query();
         final List<QueueViewMBean> queueViewMBeans1 = spyQueueViewMBean(50L, 0L, 100L);
         final List<QueueViewMBean> queueViewMBeans2 = new ArrayList<>(spyQueueViewMBean(50L, 0L, 100L));
         queueViewMBeans2.remove(0);
@@ -100,6 +104,7 @@ public class QueuesTest extends ApplicationTest {
         verify(jmxClient, times(2)).getQueues();
         verifyNoMoreInteractions(jmxClient);
         assertThat("table should have 49 rows", table.getRoot()::getChildren, hasSize(49));
+        assertThat("footer should be 'Showing 49 of 50 queues'", footer::getText, is("Showing 49 of 50 queues"));
         assertThat("the first row should be 'queue.test.alaska'", table.getRoot().getChildren().get(0).getValue().name::getValue, is("queue.test.alaska"));
     }
 
@@ -107,6 +112,7 @@ public class QueuesTest extends ApplicationTest {
     public void whenAddQueueAndClickOnRefreshTableShouldBeUpdated() {
         // given
         final JFXTreeTableView<Queue> table = lookup("#table").query();
+        final Label footer = lookup("#footer").query();
         final List<QueueViewMBean> queueViewMBeans1 = new ArrayList<>(spyQueueViewMBean(50L, 0L, 100L));
         final List<QueueViewMBean> queueViewMBeans2 = spyQueueViewMBean(50L, 0L, 100L);
         queueViewMBeans1.remove(0);
@@ -122,6 +128,7 @@ public class QueuesTest extends ApplicationTest {
         verify(jmxClient, times(2)).getQueues();
         verifyNoMoreInteractions(jmxClient);
         assertThat("table should have 50 rows", table.getRoot()::getChildren, hasSize(50));
+        assertThat("footer should be 'Showing 50 of 50 queues'", footer::getText, is("Showing 50 of 50 queues"));
         assertThat("last row should be 'queue.test.alabama'", table.getRoot().getChildren().get(49).getValue().name::getValue, is("queue.test.alabama"));
     }
 
@@ -129,6 +136,7 @@ public class QueuesTest extends ApplicationTest {
     public void whenSortTableAndValuesChangeSortShouldBeMaintained() {
         // given
         final JFXTreeTableView<Queue> table = lookup("#table").query();
+        final Label footer = lookup("#footer").query();
         final List<QueueViewMBean> queueViewMBeans1 = spyQueueViewMBean(50L, 0L, 100L);
         final List<QueueViewMBean> queueViewMBeans2 = spyQueueViewMBean(50L, 0L, 100L);
         given(jmxClient.getQueues())
@@ -144,6 +152,7 @@ public class QueuesTest extends ApplicationTest {
         final Function<Integer, String> queue = i -> table.getRoot().getChildren().get(i).getValue().name.getValue();
         verify(jmxClient, times(2)).getQueues();
         verifyNoMoreInteractions(jmxClient);
+        assertThat("footer should be 'Showing 50 of 50 queues'", footer::getText, is("Showing 50 of 50 queues"));
         assertThat("table should have 50 rows", table.getRoot()::getChildren, hasSize(50));
         IntStream.range(0, 49).boxed().forEach(i -> {
             final Supplier<Boolean> compare = () -> table.getRoot().getChildren().get(i).getValue().pending.getValue() <=
@@ -157,6 +166,7 @@ public class QueuesTest extends ApplicationTest {
     public void whenSearchOneQueueOneResultShouldBeShown() {
         // given
         final JFXTreeTableView<Queue> table = lookup("#table").query();
+        final Label footer = lookup("#footer").query();
         final List<QueueViewMBean> queueViewMBeans = spyQueueViewMBean(50L, 0L, 100L);
         given(jmxClient.getQueues()).willReturn(queueViewMBeans);
         initializeTable(table);
@@ -169,6 +179,7 @@ public class QueuesTest extends ApplicationTest {
         verify(jmxClient).getQueues();
         verifyNoMoreInteractions(jmxClient);
         assertThat("table should have 1 row", table.getRoot()::getChildren, hasSize(1));
+        assertThat("footer should be 'Showing 1 of 50 queues'", footer::getText, is("Showing 1 of 50 queues"));
         assertThat("the first row should be 'queue.test.alaska'", table.getRoot().getChildren().get(0).getValue().name::getValue, is("queue.test.alaska"));
     }
 
@@ -176,6 +187,7 @@ public class QueuesTest extends ApplicationTest {
     public void whenSearchIsGenericMultipleResultShouldBeShown() {
         // given
         final JFXTreeTableView<Queue> table = lookup("#table").query();
+        final Label footer = lookup("#footer").query();
         final List<QueueViewMBean> queueViewMBeans = spyQueueViewMBean(50L, 0L, 100L);
         given(jmxClient.getQueues()).willReturn(queueViewMBeans);
         initializeTable(table);
@@ -188,6 +200,7 @@ public class QueuesTest extends ApplicationTest {
         verify(jmxClient).getQueues();
         verifyNoMoreInteractions(jmxClient);
         assertThat("table should have 3 row", table.getRoot()::getChildren, hasSize(3));
+        assertThat("footer should be 'Showing 3 of 50 queues'", footer::getText, is("Showing 3 of 50 queues"));
         assertThat("the first row should be 'queue.test.alabama'", table.getRoot().getChildren().get(0).getValue().name::getValue, is("queue.test.alabama"));
         assertThat("the second row should be 'queue.test.alaska'", table.getRoot().getChildren().get(1).getValue().name::getValue, is("queue.test.alaska"));
         assertThat("the third row should be 'queue.test.california'", table.getRoot().getChildren().get(2).getValue().name::getValue, is("queue.test.california"));
@@ -197,6 +210,7 @@ public class QueuesTest extends ApplicationTest {
     public void whenSearchSortAndRefreshFilterShouldBeAppliedAndSortMaintained() {
         // given
         final JFXTreeTableView<Queue> table = lookup("#table").query();
+        final Label footer = lookup("#footer").query();
         final List<QueueViewMBean> queueViewMBeans1 = new ArrayList<>(spyQueueViewMBean(50L, 0L, 100L));
         final List<QueueViewMBean> queueViewMBeans2 = spyQueueViewMBean(50L, 0L, 100L);
         queueViewMBeans1.remove(0);
@@ -216,6 +230,7 @@ public class QueuesTest extends ApplicationTest {
         verify(jmxClient, times(2)).getQueues();
         verifyNoMoreInteractions(jmxClient);
         assertThat("table should have 4 row", table.getRoot()::getChildren, hasSize(4));
+        assertThat("footer should be 'Showing 4 of 50 queues'", footer::getText, is("Showing 4 of 50 queues"));
         assertThat("the first row should contain 'test.a'", table.getRoot().getChildren().get(0).getValue().name::getValue, containsString("test.a"));
         assertThat("the second row should contain 'test.a'", table.getRoot().getChildren().get(1).getValue().name::getValue, containsString("test.a"));
         assertThat("the third row should contain 'test.a'", table.getRoot().getChildren().get(2).getValue().name::getValue, containsString("test.a"));

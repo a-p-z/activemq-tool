@@ -16,6 +16,7 @@ import javafx.concurrent.Task;
 import javafx.event.Event;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.StackPane;
@@ -28,13 +29,17 @@ import java.util.ResourceBundle;
 import java.util.concurrent.ScheduledExecutorService;
 
 import static apz.activemq.util.Utils.setupCellValueFactory;
+import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.stream.Collectors.collectingAndThen;
 import static java.util.stream.Collectors.toList;
 import static javafx.application.Platform.runLater;
+import static javafx.beans.binding.Bindings.createStringBinding;
 import static javafx.collections.FXCollections.observableArrayList;
 
 public class QueuesController implements Initializable {
+
+    private static final String FOOTER_FORMAT = "Showing %d of %d queues";
 
     @FXML
     public StackPane root;
@@ -62,6 +67,9 @@ public class QueuesController implements Initializable {
 
     @FXML
     private JFXTreeTableColumn<Queue, Number> dequeued;
+
+    @FXML
+    private Label footer;
 
     @Inject
     private JmxClient jmxClient;
@@ -101,6 +109,11 @@ public class QueuesController implements Initializable {
 
         dequeued.setContextMenu(null);
         setupCellValueFactory(dequeued, queue -> queue.dequeued);
+
+        // footer: when row number or total queue change then change the footer
+        footer.textProperty().bind(createStringBinding(
+                () -> format(FOOTER_FORMAT, table.getCurrentItemsCount(), queues.size()),
+                table.currentItemsCountProperty(), queues));
     }
 
     @FXML
@@ -147,6 +160,8 @@ public class QueuesController implements Initializable {
                         table.sort();
                         applyFilter().changed(search.textProperty(), search.getText(), search.getText());
                     }), 300, MILLISECONDS);
+
+                    table.setCurrentItemsCount(table.getRoot().getChildren().size());
 
                     progressBar.setProgress(0.0);
                 });
