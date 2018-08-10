@@ -12,7 +12,6 @@ import com.jfoenix.controls.RecursiveTreeItem;
 import com.jfoenix.controls.datamodels.treetable.RecursiveTreeObject;
 import com.sun.istack.internal.Nullable;
 import javafx.beans.value.ChangeListener;
-import com.sun.istack.internal.Nullable;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
@@ -20,6 +19,7 @@ import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.input.MouseEvent;
@@ -35,6 +35,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import static apz.activemq.controller.ControllerFactory.newInstance;
 import static apz.activemq.util.Utils.setupCellValueFactory;
 import static java.lang.String.format;
+import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.stream.Collectors.collectingAndThen;
 import static java.util.stream.Collectors.toList;
@@ -170,8 +171,6 @@ public class QueuesController implements Initializable {
                         applyFilter().changed(search.textProperty(), search.getText(), search.getText());
                     }), 300, MILLISECONDS);
 
-                    table.setCurrentItemsCount(table.getRoot().getChildren().size());
-
                     progressBar.setProgress(0.0);
                 });
 
@@ -183,15 +182,6 @@ public class QueuesController implements Initializable {
     }
 
     /**
-     * return the selected queue
-     *
-     * @return selected queue
-     */
-    public Queue getSelectedQueue() {
-        return table.getSelectionModel().getSelectedItem().getValue();
-    }
-
-    /**
      * browse selected queue
      *
      * @param action action
@@ -200,9 +190,11 @@ public class QueuesController implements Initializable {
 
         Optional.ofNullable(action).ifPresent(ActionEvent::consume);
 
+        final Queue selectedQueue = getSelectedQueue();
         final MessagesController messagesController = newInstance(MessagesController.class);
 
-        root.getChildren().add(messagesController.root);
+        messagesController.setQueue(selectedQueue);
+        messagesController.setParent(this);
     }
 
     /**
@@ -216,8 +208,15 @@ public class QueuesController implements Initializable {
 
         final Queue selectedQueue = getSelectedQueue();
 
-        selectedQueue.purge();
-        selectedQueue.refresh();
+        try {
+            selectedQueue.purge();
+
+        } catch (final RuntimeException e) {
+            throw e;
+
+        } finally {
+            selectedQueue.refresh();
+        }
     }
 
     /**
@@ -234,8 +233,34 @@ public class QueuesController implements Initializable {
         try {
             jmxClient.getBroker().removeQueue(selectedQueue.name.getValue());
             queues.remove(selectedQueue);
+
         } catch (final Exception e) {
+            // do nothing
         }
+    }
+
+    /**
+     * add child to stack pane
+     *
+     * @param child child
+     */
+    void addChild(final Node child) {
+
+        requireNonNull(child, "child must not be null");
+
+        root.getChildren().add(child);
+    }
+
+    /**
+     * remove child from stack pane
+     *
+     * @param child child
+     */
+    void removeChild(final Node child) {
+
+        requireNonNull(child, "child must not be null");
+
+        root.getChildren().remove(child);
     }
 
     /**
@@ -261,5 +286,14 @@ public class QueuesController implements Initializable {
                 browseQueue(null);
             }
         };
+    }
+
+    /**
+     * return the selected queue
+     *
+     * @return selected queue
+     */
+    private Queue getSelectedQueue() {
+        return table.getSelectionModel().getSelectedItem().getValue();
     }
 }
