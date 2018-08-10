@@ -202,6 +202,24 @@ public class QueuesController implements Initializable {
     }
 
     /**
+     * delete selected queue
+     *
+     * @param action action
+     */
+    public void deleteSelectedQueue(final @Nullable ActionEvent action) {
+
+        Optional.ofNullable(action).ifPresent(ActionEvent::consume);
+
+        final Queue selectedQueue = getSelectedQueue();
+
+        try {
+            jmxClient.getBroker().removeQueue(selectedQueue.name.getValue());
+            queues.remove(selectedQueue);
+        } catch (final Exception e) {
+        }
+    }
+
+    /**
      * when text search change update the table predicate
      *
      * @return change listener

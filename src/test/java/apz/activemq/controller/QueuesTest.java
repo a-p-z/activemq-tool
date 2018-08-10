@@ -7,6 +7,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
+import org.apache.activemq.broker.jmx.BrokerViewMBean;
 import org.apache.activemq.broker.jmx.QueueViewMBean;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -28,6 +29,7 @@ import static apz.activemq.injection.Injector.clearRegistry;
 import static apz.activemq.injection.Injector.register;
 import static apz.activemq.utils.AssertUtils.assertThat;
 import static apz.activemq.utils.AssertUtils.assumeThat;
+import static apz.activemq.utils.MockUtils.spyBrokerViewMBean;
 import static apz.activemq.utils.MockUtils.spyQueueViewMBean;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
@@ -270,6 +272,28 @@ public class QueuesTest extends ApplicationTest {
             }
         });
         queueViewMBeans.forEach(Mockito::verifyNoMoreInteractions);
+    }
+
+    @Test
+    public void whenClickOnDeleteQueueShouldBeDeleted() throws Exception {
+        // given
+        final JFXTreeTableView<Queue> table = lookup("#table").query();
+        final List<QueueViewMBean> queueViewMBeans = spyQueueViewMBean(50L, 0L, 100L);
+        final BrokerViewMBean brokerViewMBean = spyBrokerViewMBean("ID:activemq.test.com-64874-2439984034094-1:1", "localhost", "5.14.5", "113 days 3 hours", 30, 60, 90);
+        given(jmxClient.getBroker()).willReturn(brokerViewMBean);
+        given(jmxClient.getQueues()).willReturn(queueViewMBeans);
+        initializeTable(table);
+
+        // when
+        rightClickOn(table.getChildrenUnmodifiable().get(1))
+                .clickOn("#delete");
+
+        // then
+        verify(jmxClient).getQueues();
+        verify(jmxClient).getBroker();
+        verifyNoMoreInteractions(jmxClient);
+        verify(brokerViewMBean).removeQueue(anyString());
+        verifyNoMoreInteractions(brokerViewMBean);
     }
 
     private void initializeTable(final JFXTreeTableView<Queue> table) {
