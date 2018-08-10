@@ -4,15 +4,18 @@ import apz.activemq.injection.Inject;
 import apz.activemq.jmx.JmxClient;
 import apz.activemq.listeners.QueuesTableSkinListener;
 import apz.activemq.model.Queue;
+import apz.activemq.rowfactory.QueueRowFactory;
 import com.jfoenix.controls.JFXProgressBar;
 import com.jfoenix.controls.JFXTreeTableColumn;
 import com.jfoenix.controls.JFXTreeTableView;
 import com.jfoenix.controls.RecursiveTreeItem;
 import com.jfoenix.controls.datamodels.treetable.RecursiveTreeObject;
+import com.sun.istack.internal.Nullable;
 import javafx.beans.value.ChangeListener;
 import com.sun.istack.internal.Nullable;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
+import javafx.event.ActionEvent;
 import javafx.event.Event;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -88,6 +91,7 @@ public class QueuesController implements Initializable {
         // table
         table.setShowRoot(false);
         table.skinProperty().addListener(new QueuesTableSkinListener(table, 49));
+        table.setRowFactory(new QueueRowFactory(this));
         table.setRoot(new RecursiveTreeItem<>(queues, RecursiveTreeObject::getChildren));
 
         // when table predicate change sort rows
@@ -171,6 +175,30 @@ public class QueuesController implements Initializable {
         };
 
         scheduledExecutorService.submit(task);
+    }
+
+    /**
+     * return the selected queue
+     *
+     * @return selected queue
+     */
+    public Queue getSelectedQueue() {
+        return table.getSelectionModel().getSelectedItem().getValue();
+    }
+
+    /**
+     * purge selected queue
+     *
+     * @param action action
+     */
+    public void purgeSelectedQueue(final @Nullable ActionEvent action) {
+
+        Optional.ofNullable(action).ifPresent(ActionEvent::consume);
+
+        final Queue selectedQueue = getSelectedQueue();
+
+        selectedQueue.purge();
+        selectedQueue.refresh();
     }
 
     /**

@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Objects;
+import java.util.Optional;
 
 import static java.util.Objects.requireNonNull;
 
@@ -41,6 +42,18 @@ public class Queue extends RecursiveTreeObject<Queue> {
         consumers.setValue(queueView.getConsumerCount());
         enqueued.setValue(queueView.getEnqueueCount());
         dequeued.setValue(queueView.getDequeueCount());
+    }
+
+    public void purge() {
+
+        Optional.ofNullable(queueView).ifPresent(queue -> {
+            try {
+                LOGGER.info("purging {}", name);
+                queue.purge();
+            } catch (final Exception e) {
+                throw new RuntimeException(e.getMessage(), e.getCause());
+            }
+        });
     }
 
     @Override

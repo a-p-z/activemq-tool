@@ -12,6 +12,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.testfx.framework.junit.ApplicationTest;
 
@@ -239,6 +240,36 @@ public class QueuesTest extends ApplicationTest {
             final Supplier<Long> pending = () -> queue.apply(i + 1).pending.getValue() - queue.apply(i).pending.getValue();
             assertThat("pending messages of '" + queue.apply(i).name.getValue() + "' should less or equal than pending messages of '" + queue.apply(i + 1).name.getValue() + "'", pending, greaterThanOrEqualTo(0L));
         });
+    }
+
+    @Test
+    public void whenClickOnPurgeQueueShouldBePurged() {
+        // given
+        final JFXTreeTableView<Queue> table = lookup("#table").query();
+        final List<QueueViewMBean> queueViewMBeans = spyQueueViewMBean(50L, 0L, 100L);
+        given(jmxClient.getQueues()).willReturn(queueViewMBeans);
+        initializeTable(table);
+
+        // when
+        rightClickOn(table.getChildrenUnmodifiable().get(1))
+                .clickOn("#purge");
+
+        // then
+        verify(jmxClient).getQueues();
+        verifyNoMoreInteractions(jmxClient);
+        queueViewMBeans.forEach(queueViewMBean -> verify(queueViewMBean, atLeast(1)).getQueueSize());
+        queueViewMBeans.forEach(queueViewMBean -> verify(queueViewMBean, atLeast(1)).getConsumerCount());
+        queueViewMBeans.forEach(queueViewMBean -> verify(queueViewMBean, atLeast(1)).getEnqueueCount());
+        queueViewMBeans.forEach(queueViewMBean -> verify(queueViewMBean, atLeast(1)).getDequeueCount());
+        queueViewMBeans.forEach(queueViewMBean -> verify(queueViewMBean, atLeast(1)).getName());
+        queueViewMBeans.forEach(queueViewMBean -> {
+            try {
+                verify(queueViewMBean, atMost(1)).purge();
+            } catch (final Exception e) {
+                throw new RuntimeException(e.getMessage(), e.getCause());
+            }
+        });
+        queueViewMBeans.forEach(Mockito::verifyNoMoreInteractions);
     }
 
     private void initializeTable(final JFXTreeTableView<Queue> table) {
