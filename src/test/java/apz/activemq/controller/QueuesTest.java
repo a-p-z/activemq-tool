@@ -5,6 +5,7 @@ import apz.activemq.model.Queue;
 import com.jfoenix.controls.JFXTreeTableView;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
+import javafx.scene.control.Labeled;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 import org.apache.activemq.broker.jmx.BrokerViewMBean;
@@ -31,6 +32,8 @@ import static apz.activemq.utils.AssertUtils.assertThat;
 import static apz.activemq.utils.AssertUtils.assumeThat;
 import static apz.activemq.utils.MockUtils.spyBrokerViewMBean;
 import static apz.activemq.utils.MockUtils.spyQueueViewMBean;
+import static java.util.stream.Collectors.toList;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.hasSize;
@@ -294,6 +297,47 @@ public class QueuesTest extends ApplicationTest {
         verifyNoMoreInteractions(jmxClient);
         verify(brokerViewMBean).removeQueue(anyString());
         verifyNoMoreInteractions(brokerViewMBean);
+    }
+
+    @Test
+    public void whenClickOnBrowseMessagesShouldBeShown() {
+        // given
+        final JFXTreeTableView<Queue> table = lookup("#table").query();
+        final List<QueueViewMBean> queueViewMBeans = spyQueueViewMBean(50L, 0L, 100L);
+        given(jmxClient.getQueues()).willReturn(queueViewMBeans);
+        initializeTable(table);
+
+        // when
+        rightClickOn(table.getChildrenUnmodifiable().get(1))
+                .clickOn("#browse");
+
+        // then
+        verify(jmxClient).getQueues();
+        verifyNoMoreInteractions(jmxClient);
+        assertThat("titles should not be null", lookup("#title")::queryAll, notNullValue());
+        assertThat("titles should contain QUEUES ad MESSAGES",
+                () -> lookup("#title").queryAllAs(Label.class).stream().map(Labeled::getText).collect(toList()),
+                containsInAnyOrder("QUEUES", "MESSAGES"));
+    }
+
+    @Test
+    public void whenDoubleClickOnOnARowBrowseQueue() {
+        // given
+        final JFXTreeTableView<Queue> table = lookup("#table").query();
+        final List<QueueViewMBean> queueViewMBeans = spyQueueViewMBean(50L, 0L, 100L);
+        when(jmxClient.getQueues()).thenReturn(queueViewMBeans);
+        initializeTable(table);
+
+        // when
+        doubleClickOn(table.getChildrenUnmodifiable().get(1));
+
+        // then
+        verify(jmxClient).getQueues();
+        verifyNoMoreInteractions(jmxClient);
+        assertThat("titles should not be null", lookup("#title")::queryAll, notNullValue());
+        assertThat("titles should contain QUEUES ad MESSAGES",
+                () -> lookup("#title").queryAllAs(Label.class).stream().map(Labeled::getText).collect(toList()),
+                containsInAnyOrder("QUEUES", "MESSAGES"));
     }
 
     private void initializeTable(final JFXTreeTableView<Queue> table) {

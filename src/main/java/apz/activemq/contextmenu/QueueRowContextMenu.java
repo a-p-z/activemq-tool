@@ -14,10 +14,14 @@ public class QueueRowContextMenu extends ContextMenu {
 
         requireNonNull(controller, "controller must be not null");
 
+        final MenuItem browseItem = new MenuItem("Browse queue");
         final MenuItem purgeItem = new MenuItem("Purge queue");
         final MenuItem deleteItem = new MenuItem("Delete queue");
 
-        getItems().addAll(purgeItem, deleteItem);
+        getItems().addAll(browseItem, purgeItem, deleteItem);
+
+        browseItem.setId("browse");
+        browseItem.setOnAction(controller::browseQueue);
 
         purgeItem.setId("purge");
         purgeItem.setOnAction(controller::purgeSelectedQueue);

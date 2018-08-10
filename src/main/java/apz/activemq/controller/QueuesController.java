@@ -17,6 +17,7 @@ import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.event.Event;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Label;
@@ -31,6 +32,7 @@ import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.concurrent.ScheduledExecutorService;
 
+import static apz.activemq.controller.ControllerFactory.newInstance;
 import static apz.activemq.util.Utils.setupCellValueFactory;
 import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -97,6 +99,9 @@ public class QueuesController implements Initializable {
         // when table predicate change sort rows
         table.predicateProperty().addListener((observable, oldValue, newValue) -> scheduledExecutorService.schedule(() ->
                 runLater(() -> table.sort()), 300, MILLISECONDS));
+
+        // when double-click on row browse queue
+        table.setOnMousePressed(browseQueue());
 
         // columns binding
         name.setContextMenu(null);
@@ -187,6 +192,20 @@ public class QueuesController implements Initializable {
     }
 
     /**
+     * browse selected queue
+     *
+     * @param action action
+     */
+    public void browseQueue(final @Nullable ActionEvent action) {
+
+        Optional.ofNullable(action).ifPresent(ActionEvent::consume);
+
+        final MessagesController messagesController = newInstance(MessagesController.class);
+
+        root.getChildren().add(messagesController.root);
+    }
+
+    /**
      * purge selected queue
      *
      * @param action action
@@ -228,5 +247,19 @@ public class QueuesController implements Initializable {
 
         return (observable, oldValue, newValue) -> table.setPredicate(item ->
                 item.getValue().name.get().toLowerCase().contains(newValue.trim().toLowerCase()));
+    }
+
+    /**
+     * when a row is double clicked browses queue
+     *
+     * @return event handler
+     */
+    private EventHandler<MouseEvent> browseQueue() {
+
+        return event -> {
+            if (event.isPrimaryButtonDown() && event.getClickCount() == 2) {
+                browseQueue(null);
+            }
+        };
     }
 }
