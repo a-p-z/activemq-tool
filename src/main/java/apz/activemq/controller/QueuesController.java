@@ -195,6 +195,7 @@ public class QueuesController implements Initializable {
 
         messagesController.setQueue(selectedQueue);
         messagesController.setParent(this);
+        messagesController.refresh(null);
     }
 
     /**

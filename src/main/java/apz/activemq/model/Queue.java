@@ -1,5 +1,6 @@
 package apz.activemq.model;
 
+import apz.activemq.model.exception.OpenDataRuntimeException;
 import com.jfoenix.controls.datamodels.treetable.RecursiveTreeObject;
 import javafx.beans.property.LongProperty;
 import javafx.beans.property.SimpleLongProperty;
@@ -9,10 +10,17 @@ import org.apache.activemq.broker.jmx.QueueViewMBean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.management.openmbean.OpenDataException;
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+import static java.util.Arrays.stream;
+import static java.util.Collections.emptyList;
 import static java.util.Objects.requireNonNull;
+import static java.util.stream.Collectors.collectingAndThen;
+import static java.util.stream.Collectors.toList;
 
 public class Queue extends RecursiveTreeObject<Queue> {
 
@@ -54,6 +62,20 @@ public class Queue extends RecursiveTreeObject<Queue> {
                 throw new RuntimeException(e.getMessage(), e.getCause());
             }
         });
+    }
+
+    public List<Message> browse() {
+
+        return Optional.ofNullable(queueView).map(queue -> {
+            try {
+                LOGGER.info("browsing {}", name);
+                return stream(queueView.browse())
+                        .map(Message::new)
+                        .collect(collectingAndThen(toList(), Collections::unmodifiableList));
+            } catch (final OpenDataException e) {
+                throw new OpenDataRuntimeException(e);
+            }
+        }).orElse(emptyList());
     }
 
     @Override
