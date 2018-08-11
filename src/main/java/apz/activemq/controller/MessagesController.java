@@ -12,16 +12,20 @@ import com.jfoenix.controls.datamodels.treetable.RecursiveTreeObject;
 import com.sun.istack.internal.Nullable;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.value.ChangeListener;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.event.Event;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Label;
+import javafx.scene.control.TableColumnBase;
+import javafx.scene.control.TextField;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.StackPane;
 
 import java.net.URL;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -31,6 +35,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import static apz.activemq.util.Utils.setupCellValueFactory;
 import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.stream.Collectors.collectingAndThen;
+import static java.util.stream.Collectors.toList;
 import static javafx.application.Platform.runLater;
 import static javafx.beans.binding.Bindings.createStringBinding;
 import static javafx.collections.FXCollections.observableArrayList;
@@ -50,6 +56,9 @@ public class MessagesController implements Initializable {
 
     @FXML
     private JFXProgressBar progressBar;
+
+    @FXML
+    private TextField search;
 
     @FXML
     private JFXTreeTableView<Message> table;
@@ -121,6 +130,9 @@ public class MessagesController implements Initializable {
     public void initialize(final URL location, final ResourceBundle resources) {
 
         queueName.textProperty().bind(createStringBinding(() -> null != queue.getValue() ? queue.getValue().name.getValue() : "", queue));
+
+        // search bar: when search test change apply filter
+        search.textProperty().addListener(applyFilter());
 
         // table
         table.setShowRoot(false);
@@ -207,7 +219,10 @@ public class MessagesController implements Initializable {
                     messages.clear();
                     messages.addAll(refreshed);
                     table.setCurrentItemsCount(table.getRoot().getChildren().size());
-                    scheduledExecutorService.schedule(() -> runLater(() -> table.sort()), 300, MILLISECONDS);
+                    scheduledExecutorService.schedule(() -> runLater(() -> {
+                        table.sort();
+                        applyFilter().changed(search.textProperty(), search.getText(), search.getText());
+                    }), 300, MILLISECONDS);
                 });
 
                 runLater(() -> progressBar.setProgress(-0.0));
@@ -269,5 +284,23 @@ public class MessagesController implements Initializable {
         });
 
         parent.addChild(root);
+    }
+
+    /**
+     * when text search change update the table predicate
+     *
+     * @return change listener
+     */
+    private ChangeListener<? super String> applyFilter() {
+
+        return (observable, oldValue, newValue) -> {
+
+            final List<String> keys = table.getColumns().stream()
+                    .filter(TableColumnBase::isVisible)
+                    .map(TableColumnBase::getText)
+                    .collect(collectingAndThen(toList(), Collections::unmodifiableList));
+
+            table.setPredicate(item -> item.getValue().contains(keys, newValue.trim().toLowerCase()));
+        };
     }
 }

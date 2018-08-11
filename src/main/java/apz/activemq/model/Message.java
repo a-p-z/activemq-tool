@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.management.openmbean.CompositeData;
+import java.util.Collection;
 import java.util.Date;
 import java.util.Map;
 import java.util.Objects;
@@ -141,6 +142,18 @@ public class Message extends RecursiveTreeObject<Message> {
         }
 
         return null;
+    }
+
+    public boolean contains(final Collection<String> keys, final String s) {
+
+        requireNonNull(keys, "keys must be not null");
+        requireNonNull(s, "s must be not null");
+
+        return keys.stream()
+                .map(this::getValue)
+                .filter(Objects::nonNull)
+                .map(String::toLowerCase)
+                .anyMatch(v -> v.contains(s));
     }
 
     private String getValue(final String key) {

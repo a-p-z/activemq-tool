@@ -27,6 +27,7 @@ import static apz.activemq.utils.AssertUtils.assertThat;
 import static apz.activemq.utils.MockUtils.spyQueueViewMBean;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.lessThan;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
 import static org.hamcrest.Matchers.startsWith;
 import static org.mockito.ArgumentMatchers.any;
@@ -153,6 +154,75 @@ public class MessagesTest extends ApplicationTest {
             final Supplier<Integer> compare = () -> table.getRoot().getChildren().get(i).getValue().id.getValue()
                     .compareTo(table.getRoot().getChildren().get(i + 1).getValue().id.getValue());
             assertThat("id '" + messageId.apply(i) + "' should less or equal than id '" + messageId.apply(i + 1) + "'", compare, lessThanOrEqualTo(0));
+        });
+    }
+
+
+    @Test
+    public void whenSearchOneQueueOneResultShouldBeShown() throws OpenDataException {
+        // given
+        final JFXTreeTableView<Message> table = lookup("#table").query();
+        initializeTable(table);
+
+        // when
+        final String messageId = table.getRoot().getChildren().get(10).getValue().id.getValue();
+        clickOn("#search")
+                .write(messageId.substring(26, 39));
+
+        // then
+        verify(queueViewBean).getName();
+        verify(queueViewBean).browse();
+        verifyNoMoreInteractions(queueViewBean);
+        verifyZeroInteractions(jmxClient);
+        assertThat("table should have 1 row", table.getRoot()::getChildren, hasSize(1));
+        assertThat("the first row should be '" + messageId + "'", table.getRoot().getChildren().get(0).getValue().id::getValue, is(messageId));
+    }
+
+    @Test
+    public void whenSearchIsGenericMultipleResultShouldBeShown() throws OpenDataException {
+        // given
+        final JFXTreeTableView<Message> table = lookup("#table").query();
+        initializeTable(table);
+
+        // when
+        clickOn("#search")
+                .write("NON-PERSISTENT");
+
+        // then
+        verify(queueViewBean).getName();
+        verify(queueViewBean).browse();
+        verifyNoMoreInteractions(queueViewBean);
+        verifyZeroInteractions(jmxClient);
+        assertThat("table current items count should be less then 42", table::getCurrentItemsCount, lessThan(42));
+        IntStream.range(0, table.getCurrentItemsCount()).boxed().forEach(i -> {
+            final String messageId = table.getRoot().getChildren().get(i).getValue().id.getValue();
+            final Supplier<String> mode = () -> table.getRoot().getChildren().get(i).getValue().mode.getValue();
+            assertThat("mode of message '" + messageId + "' should 'NON-PERSISTENT'", mode, is("NON-PERSISTENT"));
+        });
+    }
+
+    @Test
+    public void whenSearchSortAndRefreshFilterShouldBeAppliedAndSortMaintained() throws OpenDataException {
+        // given
+        final JFXTreeTableView<Message> table = lookup("#table").query();
+        initializeTable(table);
+
+        // when
+        clickOn("#search")
+                .write("NON-PERSISTENT");
+        clickOn("#messageId.column-header");
+        clickOn("#refresh");
+
+        // then
+        verify(queueViewBean).getName();
+        verify(queueViewBean, times(2)).browse();
+        verifyNoMoreInteractions(queueViewBean);
+        verifyZeroInteractions(jmxClient);
+        assertThat("table current items count should be less then 42", table::getCurrentItemsCount, lessThan(42));
+        IntStream.range(0, table.getCurrentItemsCount()).boxed().forEach(i -> {
+            final String messageId = table.getRoot().getChildren().get(i).getValue().id.getValue();
+            final Supplier<String> mode = () -> table.getRoot().getChildren().get(i).getValue().mode.getValue();
+            assertThat("mode of message '" + messageId + "' should 'NON-PERSISTENT'", mode, is("NON-PERSISTENT"));
         });
     }
 
