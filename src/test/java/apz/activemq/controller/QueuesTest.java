@@ -63,6 +63,7 @@ public class QueuesTest extends ApplicationTest {
 
         queuesController = newInstance(QueuesController.class);
 
+
         stackPane.getChildren().add(queuesController.root);
 
         stage.setTitle(getClass().getSimpleName());

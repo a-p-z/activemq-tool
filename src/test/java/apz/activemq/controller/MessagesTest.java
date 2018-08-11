@@ -15,8 +15,9 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.testfx.framework.junit.ApplicationTest;
 
 import javax.management.openmbean.OpenDataException;
-
+import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.IntStream;
 
 import static apz.activemq.Configuration.configureScheduledExecutorService;
 import static apz.activemq.controller.ControllerFactory.newInstance;
@@ -26,8 +27,10 @@ import static apz.activemq.utils.AssertUtils.assertThat;
 import static apz.activemq.utils.MockUtils.spyQueueViewMBean;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.lessThanOrEqualTo;
 import static org.hamcrest.Matchers.startsWith;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
@@ -127,5 +130,34 @@ public class MessagesTest extends ApplicationTest {
         verifyNoMoreInteractions(jmxClient);
         assertThat("table should have 42 rows", table.getRoot()::getChildren, hasSize(42));
         assertThat("the id of the first row should start with 'ID:producer.test.com'", getFirstRowMessageId, startsWith("ID:producer.test.com"));
+    }
+
+    @Test
+    public void whenSortTableAndValuesChangeSortShouldBeMaintained() throws OpenDataException {
+        // given
+        final JFXTreeTableView<Message> table = lookup("#table").query();
+        initializeTable(table);
+
+        // when
+        clickOn("#messageId.column-header");
+        clickOn("#refresh");
+
+        // then
+        final Function<Integer, String> messageId = i -> table.getRoot().getChildren().get(i).getValue().id.getValue();
+        verify(queueViewBean).getName();
+        verify(queueViewBean, times(2)).browse();
+        verifyNoMoreInteractions(queueViewBean);
+        verifyZeroInteractions(jmxClient);
+        assertThat("table should have 42 rows", table.getRoot()::getChildren, hasSize(42));
+        IntStream.range(0, 41).boxed().forEach(i -> {
+            final Supplier<Integer> compare = () -> table.getRoot().getChildren().get(i).getValue().id.getValue()
+                    .compareTo(table.getRoot().getChildren().get(i + 1).getValue().id.getValue());
+            assertThat("id '" + messageId.apply(i) + "' should less or equal than id '" + messageId.apply(i + 1) + "'", compare, lessThanOrEqualTo(0));
+        });
+    }
+
+    private void initializeTable(final JFXTreeTableView<Message> table) {
+        messagesController.refresh(null);
+        assertThat("table should have 42 row", table.getRoot()::getChildren, hasSize(42));
     }
 }

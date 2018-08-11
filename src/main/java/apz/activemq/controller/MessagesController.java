@@ -202,6 +202,7 @@ public class MessagesController implements Initializable {
                     messages.clear();
                     messages.addAll(refreshed);
                     table.setCurrentItemsCount(table.getRoot().getChildren().size());
+                    scheduledExecutorService.schedule(() -> runLater(() -> table.sort()), 300, MILLISECONDS);
                 });
 
                 return null;
