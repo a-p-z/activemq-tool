@@ -2,6 +2,7 @@
 
 
 <?import com.jfoenix.controls.JFXButton?>
+<?import com.jfoenix.controls.JFXProgressBar?>
 <?import com.jfoenix.controls.JFXTreeTableColumn?>
 <?import com.jfoenix.controls.JFXTreeTableView?>
 <?import de.jensd.fx.glyphs.materialdesignicons.MaterialDesignIconView?>
@@ -46,6 +47,7 @@
                 </padding>
             </Label>
         </HBox>
+        <JFXProgressBar fx:id="progressBar" maxWidth="Infinity" progress="0"/>
         <HBox>
             <JFXButton id="refresh" onMouseClicked="#refresh">
                 <graphic>

@@ -4,6 +4,7 @@ import apz.activemq.injection.Inject;
 import apz.activemq.jmx.JmxClient;
 import apz.activemq.model.Message;
 import apz.activemq.model.Queue;
+import com.jfoenix.controls.JFXProgressBar;
 import com.jfoenix.controls.JFXTreeTableColumn;
 import com.jfoenix.controls.JFXTreeTableView;
 import com.jfoenix.controls.RecursiveTreeItem;
@@ -46,6 +47,9 @@ public class MessagesController implements Initializable {
 
     @FXML
     private Label separator;
+
+    @FXML
+    private JFXProgressBar progressBar;
 
     @FXML
     private JFXTreeTableView<Message> table;
@@ -195,6 +199,7 @@ public class MessagesController implements Initializable {
         final Task<Void> task = new Task<Void>() {
             @Override
             protected Void call() {
+                runLater(() -> progressBar.setProgress(-1.0));
 
                 final List<Message> refreshed = queue.getValue().browse();
 
@@ -204,6 +209,8 @@ public class MessagesController implements Initializable {
                     table.setCurrentItemsCount(table.getRoot().getChildren().size());
                     scheduledExecutorService.schedule(() -> runLater(() -> table.sort()), 300, MILLISECONDS);
                 });
+
+                runLater(() -> progressBar.setProgress(-0.0));
 
                 return null;
             }
