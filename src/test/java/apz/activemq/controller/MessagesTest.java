@@ -5,6 +5,7 @@ import apz.activemq.model.Message;
 import apz.activemq.model.Queue;
 import com.jfoenix.controls.JFXTreeTableView;
 import javafx.scene.Scene;
+import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 import org.apache.activemq.broker.jmx.QueueViewMBean;
@@ -31,6 +32,7 @@ import static org.hamcrest.Matchers.lessThan;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
 import static org.hamcrest.Matchers.startsWith;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -77,6 +79,7 @@ public class MessagesTest extends ApplicationTest {
 
         // then
         verify(queueViewBean).getName();
+        verify(queueViewBean, atLeast(1)).getMaxPageSize();
         verifyNoMoreInteractions(queueViewBean);
         verifyZeroInteractions(jmxClient);
         verify(queuesController).addChild(any());
@@ -92,6 +95,7 @@ public class MessagesTest extends ApplicationTest {
 
         // then
         verify(queueViewBean).getName();
+        verify(queueViewBean, atLeast(1)).getMaxPageSize();
         verifyNoMoreInteractions(queueViewBean);
         verifyZeroInteractions(jmxClient);
         verify(queuesController).addChild(any());
@@ -110,6 +114,7 @@ public class MessagesTest extends ApplicationTest {
         verify(queueViewBean).getConsumerCount();
         verify(queueViewBean).getEnqueueCount();
         verify(queueViewBean).getDequeueCount();
+        verify(queueViewBean, atLeast(1)).getMaxPageSize();
         verifyNoMoreInteractions(queueViewBean);
         verifyZeroInteractions(jmxClient);
         verify(queuesController).addChild(any());
@@ -119,24 +124,30 @@ public class MessagesTest extends ApplicationTest {
 
     @Test
     public void whenClickOnRefreshTableShouldBePopulated() throws OpenDataException {
+        // given
+        final JFXTreeTableView<Message> table = lookup("#table").query();
+        final Label footer = lookup("#footer").query();
+
         // when
         clickOn("#refresh");
 
         // then
-        final JFXTreeTableView<Message> table = lookup("#table").query();
         final Supplier<String> getFirstRowMessageId = () -> table.getRoot().getChildren().get(0).getValue().id.getValue();
         verify(queueViewBean).getName();
         verify(queueViewBean).browse();
+        verify(queueViewBean, atLeast(1)).getMaxPageSize();
         verifyNoMoreInteractions(queueViewBean);
-        verifyNoMoreInteractions(jmxClient);
+        verifyZeroInteractions(jmxClient);
         assertThat("table should have 42 rows", table.getRoot()::getChildren, hasSize(42));
         assertThat("the id of the first row should start with 'ID:producer.test.com'", getFirstRowMessageId, startsWith("ID:producer.test.com"));
+        assertThat("footer should be 'Showing 42 of 42 (messages are limited by browser page size 400)'", footer::getText, is("Showing 42 of 42 (messages are limited by browser page size 400)"));
     }
 
     @Test
     public void whenSortTableAndValuesChangeSortShouldBeMaintained() throws OpenDataException {
         // given
         final JFXTreeTableView<Message> table = lookup("#table").query();
+        final Label footer = lookup("#footer").query();
         initializeTable(table);
 
         // when
@@ -147,9 +158,11 @@ public class MessagesTest extends ApplicationTest {
         final Function<Integer, String> messageId = i -> table.getRoot().getChildren().get(i).getValue().id.getValue();
         verify(queueViewBean).getName();
         verify(queueViewBean, times(2)).browse();
+        verify(queueViewBean, atLeast(1)).getMaxPageSize();
         verifyNoMoreInteractions(queueViewBean);
         verifyZeroInteractions(jmxClient);
         assertThat("table should have 42 rows", table.getRoot()::getChildren, hasSize(42));
+        assertThat("footer should be 'Showing 42 of 42 (messages are limited by browser page size 400)'", footer::getText, is("Showing 42 of 42 (messages are limited by browser page size 400)"));
         IntStream.range(0, 41).boxed().forEach(i -> {
             final Supplier<Integer> compare = () -> table.getRoot().getChildren().get(i).getValue().id.getValue()
                     .compareTo(table.getRoot().getChildren().get(i + 1).getValue().id.getValue());
@@ -157,11 +170,11 @@ public class MessagesTest extends ApplicationTest {
         });
     }
 
-
     @Test
     public void whenSearchOneQueueOneResultShouldBeShown() throws OpenDataException {
         // given
         final JFXTreeTableView<Message> table = lookup("#table").query();
+        final Label footer = lookup("#footer").query();
         initializeTable(table);
 
         // when
@@ -172,16 +185,19 @@ public class MessagesTest extends ApplicationTest {
         // then
         verify(queueViewBean).getName();
         verify(queueViewBean).browse();
+        verify(queueViewBean, atLeast(1)).getMaxPageSize();
         verifyNoMoreInteractions(queueViewBean);
         verifyZeroInteractions(jmxClient);
         assertThat("table should have 1 row", table.getRoot()::getChildren, hasSize(1));
         assertThat("the first row should be '" + messageId + "'", table.getRoot().getChildren().get(0).getValue().id::getValue, is(messageId));
+        assertThat("footer should be 'Showing 1 of 42 (messages are limited by browser page size 400)'", footer::getText, is("Showing 1 of 42 (messages are limited by browser page size 400)"));
     }
 
     @Test
     public void whenSearchIsGenericMultipleResultShouldBeShown() throws OpenDataException {
         // given
         final JFXTreeTableView<Message> table = lookup("#table").query();
+        final Label footer = lookup("#footer").query();
         initializeTable(table);
 
         // when
@@ -191,9 +207,11 @@ public class MessagesTest extends ApplicationTest {
         // then
         verify(queueViewBean).getName();
         verify(queueViewBean).browse();
+        verify(queueViewBean, atLeast(1)).getMaxPageSize();
         verifyNoMoreInteractions(queueViewBean);
         verifyZeroInteractions(jmxClient);
         assertThat("table current items count should be less then 42", table::getCurrentItemsCount, lessThan(42));
+        assertThat("footer should be 'Showing " + table.getCurrentItemsCount() + " of 42 (messages are limited by browser page size 400)'", footer::getText, is("Showing " + table.getCurrentItemsCount() + " of 42 (messages are limited by browser page size 400)"));
         IntStream.range(0, table.getCurrentItemsCount()).boxed().forEach(i -> {
             final String messageId = table.getRoot().getChildren().get(i).getValue().id.getValue();
             final Supplier<String> mode = () -> table.getRoot().getChildren().get(i).getValue().mode.getValue();
@@ -205,6 +223,7 @@ public class MessagesTest extends ApplicationTest {
     public void whenSearchSortAndRefreshFilterShouldBeAppliedAndSortMaintained() throws OpenDataException {
         // given
         final JFXTreeTableView<Message> table = lookup("#table").query();
+        final Label footer = lookup("#footer").query();
         initializeTable(table);
 
         // when
@@ -216,9 +235,11 @@ public class MessagesTest extends ApplicationTest {
         // then
         verify(queueViewBean).getName();
         verify(queueViewBean, times(2)).browse();
+        verify(queueViewBean, atLeast(1)).getMaxPageSize();
         verifyNoMoreInteractions(queueViewBean);
         verifyZeroInteractions(jmxClient);
         assertThat("table current items count should be less then 42", table::getCurrentItemsCount, lessThan(42));
+        assertThat("footer should be 'Showing " + table.getCurrentItemsCount() + " of 42 (messages are limited by browser page size 400)'", footer::getText, is("Showing " + table.getCurrentItemsCount() + " of 42 (messages are limited by browser page size 400)"));
         IntStream.range(0, table.getCurrentItemsCount()).boxed().forEach(i -> {
             final String messageId = table.getRoot().getChildren().get(i).getValue().id.getValue();
             final Supplier<String> mode = () -> table.getRoot().getChildren().get(i).getValue().mode.getValue();

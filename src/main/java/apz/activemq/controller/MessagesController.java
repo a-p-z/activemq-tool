@@ -33,6 +33,7 @@ import java.util.ResourceBundle;
 import java.util.concurrent.ScheduledExecutorService;
 
 import static apz.activemq.util.Utils.setupCellValueFactory;
+import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.stream.Collectors.collectingAndThen;
@@ -44,6 +45,8 @@ import static javafx.scene.control.SelectionMode.MULTIPLE;
 import static javafx.scene.control.TreeSortMode.ONLY_FIRST_LEVEL;
 
 public class MessagesController implements Initializable {
+
+    private static final String FOOTER_FORMAT = "Showing %d of %d (messages are limited by browser page size %d)";
 
     @FXML
     public StackPane root;
@@ -117,6 +120,8 @@ public class MessagesController implements Initializable {
     @FXML
     private JFXTreeTableColumn<Message, String> body;
 
+    @FXML
+    private Label footer;
 
     @Inject
     private JmxClient jmxClient;
@@ -196,6 +201,12 @@ public class MessagesController implements Initializable {
 
         body.setContextMenu(null);
         setupCellValueFactory(body, message -> message.body);
+
+        // footer: when row number or total messages change then change the footer
+        footer.setText(format(FOOTER_FORMAT, table.getCurrentItemsCount(), messages.size(), null != queue.getValue() ? queue.getValue().getMaxPageSize() : 0));
+        footer.textProperty().bind(createStringBinding(
+                () -> format(FOOTER_FORMAT, table.getCurrentItemsCount(), messages.size(), null != queue.getValue() ? queue.getValue().getMaxPageSize() : 0),
+                table.currentItemsCountProperty(), messages, queue));
     }
 
     /**

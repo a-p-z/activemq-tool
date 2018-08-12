@@ -6,6 +6,7 @@ import javafx.beans.property.LongProperty;
 import javafx.beans.property.SimpleLongProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import org.apache.activemq.broker.jmx.DestinationViewMBean;
 import org.apache.activemq.broker.jmx.QueueViewMBean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -76,6 +77,15 @@ public class Queue extends RecursiveTreeObject<Queue> {
                 throw new OpenDataRuntimeException(e);
             }
         }).orElse(emptyList());
+    }
+
+    public int getMaxPageSize() {
+
+        LOGGER.info("getting max page size of {}", name);
+
+        return Optional.ofNullable(queueView)
+                .map(DestinationViewMBean::getMaxPageSize)
+                .orElse(-1);
     }
 
     @Override
