@@ -6,6 +6,8 @@ import apz.activemq.injection.Inject;
 import apz.activemq.jmx.JmxClient;
 import apz.activemq.model.Message;
 import apz.activemq.model.Queue;
+import apz.activemq.rowfactory.MessageRowFactory;
+import apz.activemq.util.Utils;
 import com.jfoenix.controls.JFXProgressBar;
 import com.jfoenix.controls.JFXTreeTableColumn;
 import com.jfoenix.controls.JFXTreeTableView;
@@ -32,7 +34,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
+import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.function.Function;
 
 import static apz.activemq.util.Utils.setupCellValueFactory;
 import static java.lang.String.format;
@@ -147,6 +151,7 @@ public class MessagesController implements Initializable {
         // table
         table.setShowRoot(false);
         table.getSelectionModel().setSelectionMode(MULTIPLE);
+        table.setRowFactory(new MessageRowFactory(this));
         table.setRoot(new RecursiveTreeItem<>(messages, RecursiveTreeObject::getChildren));
         table.setSortMode(ONLY_FIRST_LEVEL);
         table.predicateProperty().addListener((observable, oldValue, newValue) -> scheduledExecutorService.schedule(() ->
@@ -272,6 +277,29 @@ public class MessagesController implements Initializable {
     public void onMouseExitedFromQueueName(final @Nullable MouseEvent event) {
         Optional.ofNullable(event).ifPresent(Event::consume);
         separator.setText(">");
+    }
+
+    /**
+     * add message user column to the table if not present
+     * @param messageUserKeys message user key
+     */
+    public void addMessageUserColumns(final Set<?> messageUserKeys) {
+
+        requireNonNull(messageUserKeys, "messageUserKeys must not be null");
+
+        final List<String> currentColumnNames = table.getColumns().stream()
+                .map(TableColumnBase::getText)
+                .collect(collectingAndThen(toList(), Collections::unmodifiableList));
+
+        messageUserKeys.stream()
+                .filter(String.class::isInstance)
+                .map(String.class::cast)
+                .filter(name -> !currentColumnNames.contains(name))
+                .map((Function<String, JFXTreeTableColumn<Message, Object>>) JFXTreeTableColumn::new)
+                .peek(column -> column.setVisible(false))
+                .peek(column -> column.setContextMenu(new HideColumnContextMenu(column)))
+                .peek(Utils::setupCellValueFactory)
+                .forEach(column -> table.getColumns().add(currentColumnNames.size() - 1, column));
     }
 
     /**

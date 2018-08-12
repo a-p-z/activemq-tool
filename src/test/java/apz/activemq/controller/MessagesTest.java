@@ -277,7 +277,7 @@ public class MessagesTest extends ApplicationTest {
         verify(queueViewBean, atLeast(1)).getMaxPageSize();
         verifyNoMoreInteractions(queueViewBean);
         verifyZeroInteractions(jmxClient);
-        assertThat("visible columns should be 19", visibleColumns, hasSize(19));
+        assertThat("visible columns should be 21", visibleColumns, hasSize(21));
     }
 
     @Test
@@ -438,7 +438,83 @@ public class MessagesTest extends ApplicationTest {
         assertThat("table current items count should be 1", table::getCurrentItemsCount, is(1));
         assertThat("footer should be 'Showing 1 of 42 (messages are limited by browser page size 400)'", footer::getText, is("Showing 1 of 42 (messages are limited by browser page size 400)"));
         assertThat("body of message should be '" + body + "'", table.getRoot().getChildren().get(0).getValue().body::getValue, is(body));
+    }
 
+    @Test
+    public void whenClickShowUserColumnItShouldBeVisible() throws OpenDataException {
+        // given
+        final JFXTreeTableView<Message> table = lookup("#table").query();
+        initializeTable(table);
+        final int initialVisibleColumnSize = (int) table.getColumns().stream()
+                .filter(TableColumnBase::isVisible)
+                .count();
+
+        // when
+        scrollToLastColumn(table);
+        rightClickOn("#add.column-header")
+                .moveBy(10, 340)
+                .press(PRIMARY).release(PRIMARY);
+
+        // then
+        final Supplier<List<TreeTableColumn<Message, ?>>> visibleColumns2 = () -> table.getColumns().stream()
+                .filter(TableColumnBase::isVisible)
+                .collect(collectingAndThen(toList(), Collections::unmodifiableList));
+        verify(queueViewBean).getName();
+        verify(queueViewBean).browse();
+        verify(queueViewBean, atLeast(1)).getMaxPageSize();
+        verifyNoMoreInteractions(queueViewBean);
+        verifyZeroInteractions(jmxClient);
+        assertThat("visible columns should be " + (initialVisibleColumnSize + 1), visibleColumns2, hasSize(initialVisibleColumnSize + 1));
+        assertThat("new column should be 'exceptionType'", visibleColumns2.get().get(initialVisibleColumnSize - 1)::getText, is("jobId"));
+    }
+
+    @Test
+    public void whenShowAUserColumnAndSearchAValueOneResultShouldBeReturned() throws OpenDataException {
+        // given
+        final JFXTreeTableView<Message> table = lookup("#table").query();
+        final Label footer = lookup("#footer").query();
+        initializeTable(table);
+
+        // when
+        final String jobId = (String) table.getRoot().getChildren().get(10).getValue().messageUserProperties.getValue().get("jobId");
+        scrollToLastColumn(table);
+        rightClickOn("#add.column-header")
+                .moveBy(10, 340)
+                .press(PRIMARY).release(PRIMARY);
+        clickOn("#search")
+                .write(jobId);
+
+        // then
+        verify(queueViewBean).getName();
+        verify(queueViewBean).browse();
+        verify(queueViewBean, atLeast(1)).getMaxPageSize();
+        verifyNoMoreInteractions(queueViewBean);
+        verifyZeroInteractions(jmxClient);
+        assertThat("table current items count should be 1", table::getCurrentItemsCount, is(1));
+        assertThat("footer should be 'Showing 1 of 42 (messages are limited by browser page size 400)'", footer::getText, is("Showing 1 of 42 (messages are limited by browser page size 400)"));
+        assertThat("jobId of message should be '" + jobId + "'", () -> table.getRoot().getChildren().get(0).getValue().messageUserProperties.getValue().get("jobId"), is(jobId));
+    }
+
+    @Test
+    public void whenSearchAValueOfAHiddenUserColumnNoResultShouldBeReturned() throws OpenDataException {
+        // given
+        final JFXTreeTableView<Message> table = lookup("#table").query();
+        final Label footer = lookup("#footer").query();
+        initializeTable(table);
+
+        // when
+        final String jobId = (String) table.getRoot().getChildren().get(10).getValue().messageUserProperties.getValue().get("jobId");
+        clickOn("#search")
+                .write(jobId);
+
+        // then
+        verify(queueViewBean).getName();
+        verify(queueViewBean).browse();
+        verify(queueViewBean, atLeast(1)).getMaxPageSize();
+        verifyNoMoreInteractions(queueViewBean);
+        verifyZeroInteractions(jmxClient);
+        assertThat("table current items count should be 0", table::getCurrentItemsCount, is(0));
+        assertThat("footer should be 'Showing 0 of 42 (messages are limited by browser page size 400)'", footer::getText, is("Showing 0 of 42 (messages are limited by browser page size 400)"));
     }
 
     private void initializeTable(final JFXTreeTableView<Message> table) {

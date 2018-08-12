@@ -50,7 +50,7 @@ public class Message extends RecursiveTreeObject<Message> {
     public final LongProperty activeMQBrokerInTime;
     public final LongProperty activeMQBrokerOutTime;
 
-    public final ObjectProperty<Map> properties;
+    public final ObjectProperty<Map> messageUserProperties;
     public final StringProperty body;
     public final LongProperty size;
 
@@ -81,7 +81,7 @@ public class Message extends RecursiveTreeObject<Message> {
         final Long activeMQBrokerOutTime = get(cdata, "JMSActiveMQBrokerOutTime", Long.class); // Time stamp (in milliseconds) for when the message left the broker
 
         // Message User Properties:
-        final Map properties = getMessageUserProperties(cdata);
+        final Map messageUserProperties = getMessageUserProperties(cdata);
 
         final Long size = get(cdata, BODY_LENGTH, Long.class);
         final String bodyPreview = getBodyPreview(cdata);
@@ -105,7 +105,7 @@ public class Message extends RecursiveTreeObject<Message> {
         this.activeMQBrokerInTime = new SimpleLongProperty(null != activeMQBrokerInTime ? activeMQBrokerInTime : 0L);
         this.activeMQBrokerOutTime = new SimpleLongProperty(null != activeMQBrokerOutTime ? activeMQBrokerOutTime : 0L);
 
-        this.properties = new SimpleObjectProperty<>(properties);
+        this.messageUserProperties = new SimpleObjectProperty<>(messageUserProperties);
         this.body = new SimpleStringProperty(null != bodyPreview ? bodyPreview : body);
         this.size = new SimpleLongProperty(null != size ? size : this.body.getValue().length());
     }
@@ -235,8 +235,8 @@ public class Message extends RecursiveTreeObject<Message> {
                 break;
 
             default:
-                value = properties.getValue().containsKey(key) && null != properties.getValue().get(key) ?
-                        properties.getValue().get(key).toString() :
+                value = messageUserProperties.getValue().containsKey(key) && null != messageUserProperties.getValue().get(key) ?
+                        messageUserProperties.getValue().get(key).toString() :
                         null;
                 break;
         }
@@ -273,7 +273,7 @@ public class Message extends RecursiveTreeObject<Message> {
                 Objects.equals(producerTxId.getValue(), message.producerTxId.getValue()) &&
                 Objects.equals(activeMQBrokerInTime.getValue(), message.activeMQBrokerInTime.getValue()) &&
                 Objects.equals(activeMQBrokerOutTime.getValue(), message.activeMQBrokerOutTime.getValue()) &&
-                Objects.equals(properties.getValue(), message.properties.getValue()) &&
+                Objects.equals(messageUserProperties.getValue(), message.messageUserProperties.getValue()) &&
                 Objects.equals(size.getValue(), message.size.getValue()) &&
                 Objects.equals(body.getValue(), message.body.getValue());
     }
@@ -298,7 +298,7 @@ public class Message extends RecursiveTreeObject<Message> {
                 producerTxId.getValue(),
                 activeMQBrokerInTime.getValue(),
                 activeMQBrokerOutTime.getValue(),
-                properties.getValue(),
+                messageUserProperties.getValue(),
                 size.getValue(),
                 body.getValue());
     }
