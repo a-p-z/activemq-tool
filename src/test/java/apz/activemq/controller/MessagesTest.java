@@ -6,6 +6,8 @@ import apz.activemq.model.Queue;
 import com.jfoenix.controls.JFXTreeTableView;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
+import javafx.scene.control.TableColumnBase;
+import javafx.scene.control.TreeTableColumn;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 import org.apache.activemq.broker.jmx.QueueViewMBean;
@@ -16,6 +18,8 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.testfx.framework.junit.ApplicationTest;
 
 import javax.management.openmbean.OpenDataException;
+import java.util.Collections;
+import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
@@ -25,11 +29,19 @@ import static apz.activemq.controller.ControllerFactory.newInstance;
 import static apz.activemq.injection.Injector.clearRegistry;
 import static apz.activemq.injection.Injector.register;
 import static apz.activemq.utils.AssertUtils.assertThat;
+import static apz.activemq.utils.AssertUtils.assumeThat;
+import static apz.activemq.utils.AssertUtils.retry;
 import static apz.activemq.utils.MockUtils.spyQueueViewMBean;
+import static java.util.stream.Collectors.collectingAndThen;
+import static java.util.stream.Collectors.toList;
+import static javafx.application.Platform.runLater;
+import static javafx.scene.input.MouseButton.PRIMARY;
+import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.lessThan;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
+import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.startsWith;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeast;
@@ -247,8 +259,195 @@ public class MessagesTest extends ApplicationTest {
         });
     }
 
+    @Test
+    public void whenClickShowAllAllColumnsShouldBeVisible() throws OpenDataException {
+        // given
+        final JFXTreeTableView<Message> table = lookup("#table").query();
+        initializeTable(table);
+
+        // when
+        scrollToLastColumn(table);
+        rightClickOn("#add.column-header")
+                .clickOn("#showAll");
+
+        // then
+        final Supplier<List<TreeTableColumn<Message, ?>>> visibleColumns = () -> table.getColumns().stream().filter(TableColumnBase::isVisible).collect(collectingAndThen(toList(), Collections::unmodifiableList));
+        verify(queueViewBean).getName();
+        verify(queueViewBean).browse();
+        verify(queueViewBean, atLeast(1)).getMaxPageSize();
+        verifyNoMoreInteractions(queueViewBean);
+        verifyZeroInteractions(jmxClient);
+        assertThat("visible columns should be 19", visibleColumns, hasSize(19));
+    }
+
+    @Test
+    public void whenClickHideAllOnlyMessageIdColumnShouldBeVisible() throws OpenDataException {
+        // given
+        final JFXTreeTableView<Message> table = lookup("#table").query();
+        initializeTable(table);
+
+        // when
+        scrollToLastColumn(table);
+        rightClickOn("#add.column-header")
+                .clickOn("#showAll");
+
+        scrollToLastColumn(table);
+        rightClickOn("#add.column-header")
+                .clickOn("#hideAll");
+
+        // then
+        final Supplier<List<TreeTableColumn<Message, ?>>> visibleColumns = () -> table.getColumns().stream().filter(TableColumnBase::isVisible).collect(collectingAndThen(toList(), Collections::unmodifiableList));
+        verify(queueViewBean).getName();
+        verify(queueViewBean).browse();
+        verify(queueViewBean, atLeast(1)).getMaxPageSize();
+        verifyNoMoreInteractions(queueViewBean);
+        verifyZeroInteractions(jmxClient);
+        assertThat("visible columns should be 2", visibleColumns, hasSize(2));
+        assertThat("first column should be 'Message id", visibleColumns.get().get(0)::getText, is("Message id"));
+        assertThat("second column should be '+'", visibleColumns.get().get(1)::getText, is("+"));
+    }
+
+    @Test
+    public void whenClickHideModeColumnItShouldNotBeVisible() throws OpenDataException {
+        // given
+        final JFXTreeTableView<Message> table = lookup("#table").query();
+        initializeTable(table);
+        final int initialVisibleColumnSize = (int) table.getColumns().stream()
+                .filter(TableColumnBase::isVisible)
+                .count();
+
+        // when
+        rightClickOn("#mode.column-header")
+                .clickOn("#hide");
+
+        // then
+        final Supplier<List<TreeTableColumn<Message, ?>>> visibleColumns2 = () -> table.getColumns().stream()
+                .filter(TableColumnBase::isVisible)
+                .collect(collectingAndThen(toList(), Collections::unmodifiableList));
+        verify(queueViewBean).getName();
+        verify(queueViewBean).browse();
+        verify(queueViewBean, atLeast(1)).getMaxPageSize();
+        verifyNoMoreInteractions(queueViewBean);
+        verifyZeroInteractions(jmxClient);
+        assertThat("visible columns should be " + (initialVisibleColumnSize - 1), visibleColumns2, hasSize(initialVisibleColumnSize - 1));
+        assertThat("table should not contain 'Mode' column", () -> visibleColumns2.get().stream().map(TableColumnBase::getText).collect(toList()), not(hasItem("Mode")));
+    }
+
+    @Test
+    public void whenClickHideAndClickShowModeColumnItShouldBeVisible() throws OpenDataException {
+        // given
+        final JFXTreeTableView<Message> table = lookup("#table").query();
+        initializeTable(table);
+        final int initialVisibleColumnSize = (int) table.getColumns().stream()
+                .filter(TableColumnBase::isVisible)
+                .count();
+
+        // when
+        rightClickOn("#mode.column-header")
+                .clickOn("#hide");
+        scrollToLastColumn(table);
+        rightClickOn("#add.column-header")
+                .moveBy(10, 260)
+                .press(PRIMARY).release(PRIMARY);
+
+        // then
+        final Supplier<List<TreeTableColumn<Message, ?>>> visibleColumns2 = () -> table.getColumns().stream()
+                .filter(TableColumnBase::isVisible)
+                .collect(collectingAndThen(toList(), Collections::unmodifiableList));
+        verify(queueViewBean).getName();
+        verify(queueViewBean).browse();
+        verify(queueViewBean, atLeast(1)).getMaxPageSize();
+        verifyNoMoreInteractions(queueViewBean);
+        verifyZeroInteractions(jmxClient);
+        assertThat("visible columns should be " + (initialVisibleColumnSize), visibleColumns2, hasSize(initialVisibleColumnSize));
+        assertThat("table should not contain 'Mode' column", () -> visibleColumns2.get().stream().map(TableColumnBase::getText).collect(toList()), hasItem("Mode"));
+    }
+
+    @Test
+    public void whenClickShowBodyColumnBodiesShouldBeVisible() throws OpenDataException {
+        // given
+        final JFXTreeTableView<Message> table = lookup("#table").query();
+        initializeTable(table);
+        final int initialVisibleColumnSize = (int) table.getColumns().stream()
+                .filter(TableColumnBase::isVisible)
+                .count();
+
+        // when
+        scrollToLastColumn(table);
+        rightClickOn("#add.column-header")
+                .moveBy(10, 100)
+                .press(PRIMARY).release(PRIMARY);
+
+        // then
+        final Supplier<List<TreeTableColumn<Message, ?>>> visibleColumns2 = () -> table.getColumns().stream()
+                .filter(TableColumnBase::isVisible)
+                .collect(collectingAndThen(toList(), Collections::unmodifiableList));
+        verify(queueViewBean).getName();
+        verify(queueViewBean).browse();
+        verify(queueViewBean, atLeast(1)).getMaxPageSize();
+        verifyNoMoreInteractions(queueViewBean);
+        verifyZeroInteractions(jmxClient);
+        assertThat("visible columns should be " + (initialVisibleColumnSize + 1), visibleColumns2, hasSize(initialVisibleColumnSize + 1));
+        assertThat("new column should be 'Body'", visibleColumns2.get().get(initialVisibleColumnSize - 1)::getText, is("Body"));
+    }
+
+    @Test
+    public void whenSearchTheValueOfAHiddenColumnNoResultShouldBeReturned() throws OpenDataException {
+        // given
+        final JFXTreeTableView<Message> table = lookup("#table").query();
+        final Label footer = lookup("#footer").query();
+        initializeTable(table);
+
+        // when
+        final String body = table.getRoot().getChildren().get(10).getValue().body.getValue();
+        clickOn("#search")
+                .write(body);
+
+        // then
+        verify(queueViewBean).getName();
+        verify(queueViewBean).browse();
+        verify(queueViewBean, atLeast(1)).getMaxPageSize();
+        verifyNoMoreInteractions(queueViewBean);
+        verifyZeroInteractions(jmxClient);
+        assertThat("table current items count should be 0", table::getCurrentItemsCount, is(0));
+        assertThat("footer should be 'Showing 0 of 42 (messages are limited by browser page size 400)'", footer::getText, is("Showing 0 of 42 (messages are limited by browser page size 400)"));
+    }
+
+    @Test
+    public void whenShowAHiddenColumnAndSearchAValueOneResultShouldBeReturned() throws OpenDataException {
+        // given
+        final JFXTreeTableView<Message> table = lookup("#table").query();
+        final Label footer = lookup("#footer").query();
+        initializeTable(table);
+
+        // when
+        final String body = table.getRoot().getChildren().get(10).getValue().body.getValue();
+        scrollToLastColumn(table);
+        rightClickOn("#add.column-header")
+                .moveBy(10, 100)
+                .press(PRIMARY).release(PRIMARY);
+        clickOn("#search")
+                .write(body);
+
+        // then
+        verify(queueViewBean).getName();
+        verify(queueViewBean).browse();
+        verify(queueViewBean, atLeast(1)).getMaxPageSize();
+        verifyNoMoreInteractions(queueViewBean);
+        verifyZeroInteractions(jmxClient);
+        assertThat("table current items count should be 1", table::getCurrentItemsCount, is(1));
+        assertThat("footer should be 'Showing 1 of 42 (messages are limited by browser page size 400)'", footer::getText, is("Showing 1 of 42 (messages are limited by browser page size 400)"));
+        assertThat("body of message should be '" + body + "'", table.getRoot().getChildren().get(0).getValue().body::getValue, is(body));
+
+    }
+
     private void initializeTable(final JFXTreeTableView<Message> table) {
         messagesController.refresh(null);
-        assertThat("table should have 42 row", table.getRoot()::getChildren, hasSize(42));
+        assumeThat("table should have 42 row", table.getRoot()::getChildren, hasSize(42));
+    }
+
+    private void scrollToLastColumn(final JFXTreeTableView<Message> table) {
+        runLater(() -> table.scrollToColumnIndex(table.getColumns().size() - 1));
+        retry(() -> clickOn("#add.column-header"));
     }
 }

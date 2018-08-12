@@ -85,6 +85,7 @@
                     <JFXTreeTableColumn fx:id="size" text="Size" editable="false" visible="false" minWidth="180.0" style="-fx-alignment: TOP-RIGHT; -fx-padding: 16 16 16 16;"/>
                     <JFXTreeTableColumn fx:id="body" text="Body" editable="false" visible="false" minWidth="300.0" style="-fx-padding: 16 16 16 16;"/>
 
+                    <JFXTreeTableColumn fx:id="add" text="+" editable="false" resizable="false" sortable="false" maxWidth="20.0"/>
                 </columns>
             </JFXTreeTableView>
             <Label fx:id="footer"/>

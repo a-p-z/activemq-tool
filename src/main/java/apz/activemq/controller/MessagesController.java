@@ -1,5 +1,7 @@
 package apz.activemq.controller;
 
+import apz.activemq.contextmenu.HideColumnContextMenu;
+import apz.activemq.contextmenu.ShowColumnContextMenu;
 import apz.activemq.injection.Inject;
 import apz.activemq.jmx.JmxClient;
 import apz.activemq.model.Message;
@@ -121,6 +123,9 @@ public class MessagesController implements Initializable {
     private JFXTreeTableColumn<Message, String> body;
 
     @FXML
+    private JFXTreeTableColumn<Message, Void> add;
+
+    @FXML
     private Label footer;
 
     @Inject
@@ -151,56 +156,58 @@ public class MessagesController implements Initializable {
         messageId.setContextMenu(null);
         setupCellValueFactory(messageId, message -> message.id);
 
-        correlationId.setContextMenu(null);
+        correlationId.setContextMenu(new HideColumnContextMenu(correlationId));
         setupCellValueFactory(correlationId, message -> message.correlationId);
 
-        mode.setContextMenu(null);
+        mode.setContextMenu(new HideColumnContextMenu(mode));
         setupCellValueFactory(mode, message -> message.mode);
 
-        priority.setContextMenu(null);
+        priority.setContextMenu(new HideColumnContextMenu(priority));
         setupCellValueFactory(priority, message -> message.priority);
 
-        redelivered.setContextMenu(null);
+        redelivered.setContextMenu(new HideColumnContextMenu(redelivered));
         setupCellValueFactory(redelivered, message -> message.redelivered);
 
-        replyTo.setContextMenu(null);
+        replyTo.setContextMenu(new HideColumnContextMenu(replyTo));
         setupCellValueFactory(replyTo, message -> message.replyTo);
 
-        timestamp.setContextMenu(null);
+        timestamp.setContextMenu(new HideColumnContextMenu(timestamp));
         setupCellValueFactory(timestamp, message -> message.timestamp);
 
-        type.setContextMenu(null);
+        type.setContextMenu(new HideColumnContextMenu(type));
         setupCellValueFactory(type, message -> message.type);
 
-        destination.setContextMenu(null);
+        destination.setContextMenu(new HideColumnContextMenu(destination));
         setupCellValueFactory(destination, message -> message.destination);
 
-        expiration.setContextMenu(null);
+        expiration.setContextMenu(new HideColumnContextMenu(expiration));
         setupCellValueFactory(expiration, message -> message.expiration);
 
-        deliveryCount.setContextMenu(null);
+        deliveryCount.setContextMenu(new HideColumnContextMenu(deliveryCount));
         setupCellValueFactory(deliveryCount, message -> message.deliveryCount);
 
-        groupId.setContextMenu(null);
+        groupId.setContextMenu(new HideColumnContextMenu(groupId));
         setupCellValueFactory(groupId, message -> message.groupId);
 
-        groupSequence.setContextMenu(null);
+        groupSequence.setContextMenu(new HideColumnContextMenu(groupSequence));
         setupCellValueFactory(groupSequence, message -> message.groupSequence);
 
-        producerTxId.setContextMenu(null);
+        producerTxId.setContextMenu(new HideColumnContextMenu(producerTxId));
         setupCellValueFactory(producerTxId, message -> message.producerTxId);
 
-        activeMQBrokerInTime.setContextMenu(null);
+        activeMQBrokerInTime.setContextMenu(new HideColumnContextMenu(activeMQBrokerInTime));
         setupCellValueFactory(activeMQBrokerInTime, message -> message.activeMQBrokerInTime);
 
-        activeMQBrokerOutTime.setContextMenu(null);
+        activeMQBrokerOutTime.setContextMenu(new HideColumnContextMenu(activeMQBrokerOutTime));
         setupCellValueFactory(activeMQBrokerOutTime, message -> message.activeMQBrokerOutTime);
 
-        size.setContextMenu(null);
+        size.setContextMenu(new HideColumnContextMenu(size));
         setupCellValueFactory(size, message -> message.size);
 
-        body.setContextMenu(null);
+        body.setContextMenu(new HideColumnContextMenu(body));
         setupCellValueFactory(body, message -> message.body);
+
+        add.setContextMenu(new ShowColumnContextMenu(table));
 
         // footer: when row number or total messages change then change the footer
         footer.setText(format(FOOTER_FORMAT, table.getCurrentItemsCount(), messages.size(), null != queue.getValue() ? queue.getValue().getMaxPageSize() : 0));
@@ -309,6 +316,7 @@ public class MessagesController implements Initializable {
             final List<String> keys = table.getColumns().stream()
                     .filter(TableColumnBase::isVisible)
                     .map(TableColumnBase::getText)
+                    .filter(key -> !"+".equals(key))
                     .collect(collectingAndThen(toList(), Collections::unmodifiableList));
 
             table.setPredicate(item -> item.getValue().contains(keys, newValue.trim().toLowerCase()));
