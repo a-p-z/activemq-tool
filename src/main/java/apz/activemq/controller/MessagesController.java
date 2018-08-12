@@ -25,6 +25,7 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableColumnBase;
 import javafx.scene.control.TextField;
+import javafx.scene.control.TreeItem;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.StackPane;
 
@@ -303,6 +304,21 @@ public class MessagesController implements Initializable {
     }
 
     /**
+     * delete selected messages
+     */
+    public void deleteSelectedMessages() {
+
+        getSelectedMessages().stream()
+                .filter(message -> queue.getValue().removeMessage(message.id.getValue()))
+                .forEach(messages::remove);
+
+        scheduledExecutorService.schedule(() -> runLater(() -> {
+            table.sort();
+            applyFilter().changed(search.textProperty(), search.getText(), search.getText());
+        }), 300, MILLISECONDS);
+    }
+
+    /**
      * set queue of messages
      *
      * @param queue queue
@@ -349,5 +365,17 @@ public class MessagesController implements Initializable {
 
             table.setPredicate(item -> item.getValue().contains(keys, newValue.trim().toLowerCase()));
         };
+    }
+
+    /**
+     * get selected messages
+     *
+     * @return selected messages
+     */
+    private List<Message> getSelectedMessages() {
+
+        return table.getSelectionModel().getSelectedItems().stream()
+                .map(TreeItem::getValue)
+                .collect(collectingAndThen(toList(), Collections::unmodifiableList));
     }
 }

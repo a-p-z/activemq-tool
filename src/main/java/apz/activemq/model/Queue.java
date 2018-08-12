@@ -88,6 +88,29 @@ public class Queue extends RecursiveTreeObject<Queue> {
                 .orElse(-1);
     }
 
+    public boolean removeMessage(final String messageId) {
+
+        requireNonNull(messageId, "messageId must be not null");
+
+        LOGGER.info("removing message {} in {}", messageId, name);
+
+        boolean result;
+
+        try {
+            result =  queueView.removeMessage(messageId);
+
+        } catch (final Exception e) {
+            LOGGER.error("error removing message " + messageId + " in " + name + ": " + e.getMessage(), e);
+            return false;
+        }
+
+        if (!result) {
+            LOGGER.error("error removing message " + messageId + " in " + name);
+        }
+
+        return result;
+    }
+
     @Override
     public boolean equals(final Object o) {
 

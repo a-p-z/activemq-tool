@@ -35,7 +35,10 @@ import static apz.activemq.utils.MockUtils.spyQueueViewMBean;
 import static java.util.stream.Collectors.collectingAndThen;
 import static java.util.stream.Collectors.toList;
 import static javafx.application.Platform.runLater;
+import static javafx.scene.input.KeyCode.DOWN;
+import static javafx.scene.input.KeyCode.SHIFT;
 import static javafx.scene.input.MouseButton.PRIMARY;
+import static javafx.scene.input.MouseButton.SECONDARY;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
@@ -44,11 +47,13 @@ import static org.hamcrest.Matchers.lessThanOrEqualTo;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.startsWith;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.Silent.class)
 public class MessagesTest extends ApplicationTest {
@@ -515,6 +520,42 @@ public class MessagesTest extends ApplicationTest {
         verifyZeroInteractions(jmxClient);
         assertThat("table current items count should be 0", table::getCurrentItemsCount, is(0));
         assertThat("footer should be 'Showing 0 of 42 (messages are limited by browser page size 400)'", footer::getText, is("Showing 0 of 42 (messages are limited by browser page size 400)"));
+    }
+
+    @Test
+    public void whenDeleteMessagesTheyShouldBeRemovedFromTable() throws Exception {
+        // given
+        final JFXTreeTableView<Message> table = lookup("#table").query();
+        final Label footer = lookup("#footer").query();
+        initializeTable(table);
+        when(queueViewBean.removeMessage(anyString()))
+                .thenReturn(true)
+                .thenReturn(false)
+                .thenReturn(true);
+
+        // when
+        clickOn(table.getChildrenUnmodifiable().get(1))
+                .press(SHIFT)
+                .push(DOWN)
+                .push(DOWN)
+                .release(SHIFT)
+                .press(SECONDARY)
+                .release(SECONDARY)
+                .clickOn("#delete");
+
+        // then
+        verify(queueViewBean).getName();
+        verify(queueViewBean).browse();
+        verify(queueViewBean, atLeast(1)).getMaxPageSize();
+        verify(queueViewBean, times(3)).removeMessage(anyString());
+        verifyNoMoreInteractions(queueViewBean);
+        verifyZeroInteractions(jmxClient);
+
+        retry(() -> {
+            final int currentItemsCount = table.getCurrentItemsCount();
+            assertThat("table current items count should be 40", currentItemsCount, is(40));
+            assertThat("footer should be 'Showing 40 of 40 (messages are limited by browser page size 400)'", footer.getText(), is("Showing 40 of 40 (messages are limited by browser page size 400)"));
+        });
     }
 
     private void initializeTable(final JFXTreeTableView<Message> table) {
