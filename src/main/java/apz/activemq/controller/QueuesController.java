@@ -235,14 +235,18 @@ public class QueuesController implements Initializable {
         Optional.ofNullable(action).ifPresent(ActionEvent::consume);
 
         final Queue selectedQueue = getSelectedQueue();
+        final String bodyMessage = format("You are deleting %s", selectedQueue.name.getValue());
+        final Runnable purgeSelectedQueue = () -> {
+            try {
+                jmxClient.getBroker().removeQueue(selectedQueue.name.getValue());
+                queues.remove(selectedQueue);
 
-        try {
-            jmxClient.getBroker().removeQueue(selectedQueue.name.getValue());
-            queues.remove(selectedQueue);
+            } catch (final Exception e) {
+                // do nothing
+            }
+        };
 
-        } catch (final Exception e) {
-            // do nothing
-        }
+        new ConfirmJFXDialog(root, purgeSelectedQueue, "Delete queue", bodyMessage, "Delete");
     }
 
     /**

@@ -292,6 +292,7 @@ public class QueuesTest extends ApplicationTest {
         // when
         rightClickOn(table.getChildrenUnmodifiable().get(1))
                 .clickOn("#delete");
+        clickOn("#confirm");
 
         // then
         verify(jmxClient).getQueues();
