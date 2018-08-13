@@ -1,6 +1,7 @@
 package apz.activemq.controller;
 
 import apz.activemq.component.ConfirmJFXDialog;
+import apz.activemq.component.SelectDestinationJFXDialog;
 import apz.activemq.contextmenu.HideColumnContextMenu;
 import apz.activemq.contextmenu.ShowColumnContextMenu;
 import apz.activemq.injection.Inject;
@@ -15,6 +16,7 @@ import com.jfoenix.controls.JFXTreeTableView;
 import com.jfoenix.controls.RecursiveTreeItem;
 import com.jfoenix.controls.datamodels.treetable.RecursiveTreeObject;
 import com.sun.istack.internal.Nullable;
+import javafx.beans.binding.StringExpression;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ChangeListener;
@@ -29,6 +31,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.TreeItem;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.StackPane;
+import org.apache.activemq.broker.jmx.DestinationViewMBean;
 
 import java.net.URL;
 import java.util.Collections;
@@ -38,6 +41,7 @@ import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static apz.activemq.util.Utils.setupCellValueFactory;
@@ -325,6 +329,27 @@ public class MessagesController implements Initializable {
         };
 
         new ConfirmJFXDialog(root, deleteSelectedMessages, headingMessage, bodyMessage, "Delete");
+    }
+
+    /**
+     * show dialog for copy selected messages
+     */
+    public void showCopyDialog() {
+
+        final List<Message> selectedMessages = getSelectedMessages();
+        final int total = selectedMessages.size();
+        final String selectHeading = format("Copy %d message%c", total, total > 1 ? 's' : '\0');
+        final String confirmationHeading = format("You are coping message%c to:", total > 1 ? 's' : '\0');
+        final Function<String, Runnable> copySelectedMessagesTo = destination -> () -> selectedMessages.stream()
+                .map(m -> m.id)
+                .map(StringExpression::getValue)
+                .forEach(messageId -> queue.getValue().copyMessageTo(messageId, destination));
+        final Consumer<String> onSelected = destination -> new ConfirmJFXDialog(root, copySelectedMessagesTo.apply(destination), confirmationHeading, destination, "Copy");
+        final SelectDestinationJFXDialog selectDestinationJFXDialog = new SelectDestinationJFXDialog(root, selectHeading, queue.getValue().name.getValue(), onSelected);
+
+        scheduledExecutorService.execute(() -> jmxClient.getQueues().stream()
+                .map(DestinationViewMBean::getName)
+                .forEach(selectDestinationJFXDialog::addDestination));
     }
 
     /**

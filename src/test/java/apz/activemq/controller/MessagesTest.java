@@ -48,6 +48,7 @@ import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.startsWith;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -557,6 +558,44 @@ public class MessagesTest extends ApplicationTest {
             assertThat("table current items count should be 40", currentItemsCount, is(40));
             assertThat("footer should be 'Showing 40 of 40 (messages are limited by browser page size 400)'", footer.getText(), is("Showing 40 of 40 (messages are limited by browser page size 400)"));
         });
+    }
+
+    @Test
+    public void whenCopyMessagesTheyShouldBeCopiedToDestination() throws Exception {
+        // given
+        final JFXTreeTableView<Message> table = lookup("#table").query();
+        final List<QueueViewMBean> queues = spyQueueViewMBean(50L,0L, 1L);
+        initializeTable(table);
+        when(jmxClient.getQueues()).thenReturn(queues);
+        when(queueViewBean.copyMessageTo(anyString(), anyString()))
+                .thenReturn(true)
+                .thenReturn(false)
+                .thenReturn(true);
+
+        // when
+        clickOn(table.getChildrenUnmodifiable().get(1))
+                .press(SHIFT)
+                .push(DOWN)
+                .push(DOWN)
+                .release(SHIFT)
+                .press(SECONDARY)
+                .release(SECONDARY)
+                .clickOn("#copy");
+        clickOn("#autoCompleteJFXComboBox")
+                .write("california")
+                .moveBy(-120, 30)
+                .press(PRIMARY).release(PRIMARY);
+        clickOn("#select");
+        clickOn("#confirm");
+
+        // then
+        verify(queueViewBean).getName();
+        verify(queueViewBean).browse();
+        verify(queueViewBean, atLeast(1)).getMaxPageSize();
+        verify(queueViewBean, times(3)).copyMessageTo(anyString(), eq("queue.test.california"));
+        verifyNoMoreInteractions(queueViewBean);
+        verify(jmxClient).getQueues();
+        verifyNoMoreInteractions(jmxClient);
     }
 
     private void initializeTable(final JFXTreeTableView<Message> table) {

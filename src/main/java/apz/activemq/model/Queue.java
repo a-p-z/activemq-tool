@@ -97,7 +97,7 @@ public class Queue extends RecursiveTreeObject<Queue> {
         boolean result;
 
         try {
-            result =  queueView.removeMessage(messageId);
+            result = queueView.removeMessage(messageId);
 
         } catch (final Exception e) {
             LOGGER.error("error removing message " + messageId + " in " + name + ": " + e.getMessage(), e);
@@ -106,6 +106,30 @@ public class Queue extends RecursiveTreeObject<Queue> {
 
         if (!result) {
             LOGGER.error("error removing message " + messageId + " in " + name);
+        }
+
+        return result;
+    }
+
+    public boolean copyMessageTo(final String messageId, final String destination) {
+
+        requireNonNull(messageId, "messageId must be not null");
+        requireNonNull(destination, "destination must be not null");
+
+        LOGGER.info("coping message {} from {} to {}", messageId, name, destination);
+
+        boolean result;
+
+        try {
+            result = queueView.copyMessageTo(messageId, destination);
+
+        } catch (final Exception e) {
+            LOGGER.error("error coping message " + messageId + " from " + name + " to " + destination + ": " + e.getMessage(), e);
+            return false;
+        }
+
+        if (!result) {
+            LOGGER.error("error coping message " + messageId + " from " + name + " to " + destination);
         }
 
         return result;
