@@ -1,6 +1,8 @@
 package apz.activemq;
 
+import apz.activemq.converter.MessageToStringConverter;
 import apz.activemq.jmx.JmxClient;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.sun.deploy.uitoolkit.impl.fx.HostServicesFactory;
 import com.sun.javafx.application.HostServicesDelegate;
@@ -37,5 +39,19 @@ public class Configuration {
         final ScheduledExecutorService scheduledExecutorService = newScheduledThreadPool(10, threadFactory);
         register("scheduledExecutorService", scheduledExecutorService);
         return scheduledExecutorService;
+    }
+
+    public static ObjectMapper configureObjectMapper() {
+
+        final ObjectMapper objectMapper = new ObjectMapper();
+        register("objectMapper", objectMapper);
+        return objectMapper;
+    }
+
+    public static MessageToStringConverter configureMessageToStringConverter(final ObjectMapper objectMapper) {
+
+        final MessageToStringConverter messageToStringConverter = new MessageToStringConverter(objectMapper);
+        register("messageToStringConverter", messageToStringConverter);
+        return messageToStringConverter;
     }
 }

@@ -4,6 +4,7 @@ import apz.activemq.component.ConfirmJFXDialog;
 import apz.activemq.component.SelectDestinationJFXDialog;
 import apz.activemq.contextmenu.HideColumnContextMenu;
 import apz.activemq.contextmenu.ShowColumnContextMenu;
+import apz.activemq.converter.MessageToStringConverter;
 import apz.activemq.injection.Inject;
 import apz.activemq.jmx.JmxClient;
 import apz.activemq.model.Message;
@@ -29,6 +30,8 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TableColumnBase;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TreeItem;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.StackPane;
 import org.apache.activemq.broker.jmx.DestinationViewMBean;
@@ -49,12 +52,14 @@ import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.stream.Collectors.collectingAndThen;
+import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 import static javafx.application.Platform.runLater;
 import static javafx.beans.binding.Bindings.createStringBinding;
 import static javafx.collections.FXCollections.observableArrayList;
 import static javafx.scene.control.SelectionMode.MULTIPLE;
 import static javafx.scene.control.TreeSortMode.ONLY_FIRST_LEVEL;
+import static javafx.scene.input.KeyCode.C;
 
 public class MessagesController implements Initializable {
 
@@ -144,6 +149,9 @@ public class MessagesController implements Initializable {
     @Inject
     private ScheduledExecutorService scheduledExecutorService;
 
+    @Inject
+    private MessageToStringConverter messageToStringConverter;
+
     private final ObservableList<Message> messages = observableArrayList();
     private final ObjectProperty<Queue> queue = new SimpleObjectProperty<>();
 
@@ -162,6 +170,11 @@ public class MessagesController implements Initializable {
         table.setSortMode(ONLY_FIRST_LEVEL);
         table.predicateProperty().addListener((observable, oldValue, newValue) -> scheduledExecutorService.schedule(() ->
                 runLater(() -> table.sort()), 300, MILLISECONDS));
+        table.setOnKeyPressed(event -> {
+            if (event.isControlDown() && event.getCode() == C) {
+                copySelectedMessagesToClipboard();
+            }
+        });
 
         // columns binding
         messageId.setContextMenu(null);
@@ -350,6 +363,23 @@ public class MessagesController implements Initializable {
         scheduledExecutorService.execute(() -> jmxClient.getQueues().stream()
                 .map(DestinationViewMBean::getName)
                 .forEach(selectDestinationJFXDialog::addDestination));
+    }
+
+    /**
+     * show dialog for copy selected messages
+     */
+    public void copySelectedMessagesToClipboard() {
+
+        final List<Message> selectedMessages = getSelectedMessages();
+        final ClipboardContent clipboardContent = new ClipboardContent();
+
+        selectedMessages.stream()
+                .map(message -> messageToStringConverter.convert(message))
+                .collect(collectingAndThen(joining("\n"), clipboardContent::putString));
+
+        table.getSelectionModel().clearSelection();
+
+        Clipboard.getSystemClipboard().setContent(clipboardContent);
     }
 
     /**

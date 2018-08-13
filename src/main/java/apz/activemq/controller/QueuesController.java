@@ -11,7 +11,6 @@ import com.jfoenix.controls.JFXTreeTableColumn;
 import com.jfoenix.controls.JFXTreeTableView;
 import com.jfoenix.controls.RecursiveTreeItem;
 import com.jfoenix.controls.datamodels.treetable.RecursiveTreeObject;
-import com.sun.istack.internal.Nullable;
 import javafx.beans.value.ChangeListener;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
@@ -26,6 +25,8 @@ import javafx.scene.control.TextField;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.StackPane;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.net.URL;
 import java.util.Collections;
 import java.util.List;
@@ -36,7 +37,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import static apz.activemq.controller.ControllerFactory.newInstance;
 import static apz.activemq.util.Utils.setupCellValueFactory;
 import static java.lang.String.format;
-import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.stream.Collectors.collectingAndThen;
 import static java.util.stream.Collectors.toList;
@@ -254,10 +254,7 @@ public class QueuesController implements Initializable {
      *
      * @param child child
      */
-    void addChild(final Node child) {
-
-        requireNonNull(child, "child must not be null");
-
+    void addChild(final @Nonnull Node child) {
         root.getChildren().add(child);
     }
 
@@ -266,10 +263,7 @@ public class QueuesController implements Initializable {
      *
      * @param child child
      */
-    void removeChild(final Node child) {
-
-        requireNonNull(child, "child must not be null");
-
+    void removeChild(final @Nonnull Node child) {
         root.getChildren().remove(child);
     }
 

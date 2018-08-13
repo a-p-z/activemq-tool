@@ -2,6 +2,7 @@ package apz.activemq.controller;
 
 import apz.activemq.jmx.JmxClient;
 import apz.activemq.model.Queue;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jfoenix.controls.JFXTreeTableView;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
@@ -24,6 +25,8 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
+import static apz.activemq.Configuration.configureMessageToStringConverter;
+import static apz.activemq.Configuration.configureObjectMapper;
 import static apz.activemq.Configuration.configureScheduledExecutorService;
 import static apz.activemq.controller.ControllerFactory.newInstance;
 import static apz.activemq.injection.Injector.clearRegistry;
@@ -49,6 +52,9 @@ public class QueuesTest extends ApplicationTest {
     @Mock
     private JmxClient jmxClient;
 
+    @Mock
+    private SimpleSnackbar snackbar;
+
     private QueuesController queuesController;
 
     @Override
@@ -58,11 +64,12 @@ public class QueuesTest extends ApplicationTest {
         final Scene scene = new Scene(stackPane, 800, 580);
 
         clearRegistry();
+        final ObjectMapper objectMapper = configureObjectMapper();
         register("jmxClient", jmxClient);
         configureScheduledExecutorService();
+        configureMessageToStringConverter(objectMapper);
 
         queuesController = newInstance(QueuesController.class);
-
 
         stackPane.getChildren().add(queuesController.root);
 

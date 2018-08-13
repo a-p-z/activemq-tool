@@ -3,11 +3,13 @@ package apz.activemq.controller;
 import apz.activemq.jmx.JmxClient;
 import apz.activemq.model.Message;
 import apz.activemq.model.Queue;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jfoenix.controls.JFXTreeTableView;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableColumnBase;
 import javafx.scene.control.TreeTableColumn;
+import javafx.scene.input.Clipboard;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 import org.apache.activemq.broker.jmx.QueueViewMBean;
@@ -20,10 +22,13 @@ import org.testfx.framework.junit.ApplicationTest;
 import javax.management.openmbean.OpenDataException;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
+import static apz.activemq.Configuration.configureMessageToStringConverter;
+import static apz.activemq.Configuration.configureObjectMapper;
 import static apz.activemq.Configuration.configureScheduledExecutorService;
 import static apz.activemq.controller.ControllerFactory.newInstance;
 import static apz.activemq.injection.Injector.clearRegistry;
@@ -35,6 +40,9 @@ import static apz.activemq.utils.MockUtils.spyQueueViewMBean;
 import static java.util.stream.Collectors.collectingAndThen;
 import static java.util.stream.Collectors.toList;
 import static javafx.application.Platform.runLater;
+import static javafx.scene.input.DataFormat.PLAIN_TEXT;
+import static javafx.scene.input.KeyCode.C;
+import static javafx.scene.input.KeyCode.CONTROL;
 import static javafx.scene.input.KeyCode.DOWN;
 import static javafx.scene.input.KeyCode.SHIFT;
 import static javafx.scene.input.MouseButton.PRIMARY;
@@ -77,8 +85,10 @@ public class MessagesTest extends ApplicationTest {
         final Scene scene = new Scene(stackPane, 800, 580);
 
         clearRegistry();
+        final ObjectMapper objectMapper = configureObjectMapper();
         register("jmxClient", jmxClient);
         configureScheduledExecutorService();
+        configureMessageToStringConverter(objectMapper);
 
         messagesController = newInstance(MessagesController.class);
         messagesController.setQueue(new Queue(queueViewBean));
@@ -543,7 +553,7 @@ public class MessagesTest extends ApplicationTest {
                 .press(SECONDARY)
                 .release(SECONDARY)
                 .clickOn("#delete");
-        clickOn("#confirm");
+        retry(() -> clickOn("#confirm"));
 
         // then
         verify(queueViewBean).getName();
@@ -552,19 +562,15 @@ public class MessagesTest extends ApplicationTest {
         verify(queueViewBean, times(3)).removeMessage(anyString());
         verifyNoMoreInteractions(queueViewBean);
         verifyZeroInteractions(jmxClient);
-
-        retry(() -> {
-            final int currentItemsCount = table.getCurrentItemsCount();
-            assertThat("table current items count should be 40", currentItemsCount, is(40));
-            assertThat("footer should be 'Showing 40 of 40 (messages are limited by browser page size 400)'", footer.getText(), is("Showing 40 of 40 (messages are limited by browser page size 400)"));
-        });
+        assertThat("table current items count should be 40", table::getCurrentItemsCount, is(40));
+        assertThat("footer should be 'Showing 40 of 40 (messages are limited by browser page size 400)'", footer::getText, is("Showing 40 of 40 (messages are limited by browser page size 400)"));
     }
 
     @Test
     public void whenCopyMessagesTheyShouldBeCopiedToDestination() throws Exception {
         // given
         final JFXTreeTableView<Message> table = lookup("#table").query();
-        final List<QueueViewMBean> queues = spyQueueViewMBean(50L,0L, 1L);
+        final List<QueueViewMBean> queues = spyQueueViewMBean(50L, 0L, 1L);
         initializeTable(table);
         when(jmxClient.getQueues()).thenReturn(queues);
         when(queueViewBean.copyMessageTo(anyString(), anyString()))
@@ -580,13 +586,13 @@ public class MessagesTest extends ApplicationTest {
                 .release(SHIFT)
                 .press(SECONDARY)
                 .release(SECONDARY)
-                .clickOn("#copy");
-        clickOn("#autoCompleteJFXComboBox")
+                .clickOn("#copyTo");
+        retry(() -> clickOn("#autoCompleteJFXComboBox")
                 .write("california")
                 .moveBy(-120, 30)
-                .press(PRIMARY).release(PRIMARY);
-        clickOn("#select");
-        clickOn("#confirm");
+                .press(PRIMARY).release(PRIMARY)
+                .clickOn("#select"));
+        retry(() -> clickOn("#confirm"));
 
         // then
         verify(queueViewBean).getName();
@@ -603,7 +609,7 @@ public class MessagesTest extends ApplicationTest {
         // given
         final JFXTreeTableView<Message> table = lookup("#table").query();
         final Label footer = lookup("#footer").query();
-        final List<QueueViewMBean> queues = spyQueueViewMBean(50L,0L, 1L);
+        final List<QueueViewMBean> queues = spyQueueViewMBean(50L, 0L, 1L);
         initializeTable(table);
         when(jmxClient.getQueues()).thenReturn(queues);
         when(queueViewBean.moveMessageTo(anyString(), anyString()))
@@ -619,7 +625,7 @@ public class MessagesTest extends ApplicationTest {
                 .release(SHIFT)
                 .press(SECONDARY)
                 .release(SECONDARY)
-                .clickOn("#move");
+                .clickOn("#moveTo");
         clickOn("#autoCompleteJFXComboBox")
                 .write("california")
                 .moveBy(-120, 30)
@@ -635,12 +641,64 @@ public class MessagesTest extends ApplicationTest {
         verifyNoMoreInteractions(queueViewBean);
         verify(jmxClient).getQueues();
         verifyNoMoreInteractions(jmxClient);
+        assertThat("table current items count should be 40", table::getCurrentItemsCount, is(40));
+        assertThat("footer should be 'Showing 40 of 40 (messages are limited by browser page size 400)'", footer::getText, is("Showing 40 of 40 (messages are limited by browser page size 400)"));
+    }
 
-        retry(() -> {
-            final int currentItemsCount = table.getCurrentItemsCount();
-            assertThat("table current items count should be 40", currentItemsCount, is(40));
-            assertThat("footer should be 'Showing 40 of 40 (messages are limited by browser page size 400)'", footer.getText(), is("Showing 40 of 40 (messages are limited by browser page size 400)"));
-        });
+    @Test
+    public void whenCopyMessagesTheyShouldBeCopiedToClipboard() throws Exception {
+        // given
+        final JFXTreeTableView<Message> table = lookup("#table").query();
+        final List<QueueViewMBean> queues = spyQueueViewMBean(50L, 0L, 1L);
+        initializeTable(table);
+        when(jmxClient.getQueues()).thenReturn(queues);
+
+        // when
+        clickOn(table.getChildrenUnmodifiable().get(1))
+                .press(SHIFT)
+                .push(DOWN)
+                .push(DOWN)
+                .release(SHIFT)
+                .press(SECONDARY)
+                .release(SECONDARY)
+                .clickOn("#copyToClipboard");
+
+        // then
+        final AtomicInteger linesNum = new AtomicInteger(-1);
+        verify(queueViewBean).getName();
+        verify(queueViewBean).browse();
+        verify(queueViewBean, atLeast(1)).getMaxPageSize();
+        verifyNoMoreInteractions(queueViewBean);
+        verifyZeroInteractions(jmxClient);
+        runLater(() -> linesNum.set(Clipboard.getSystemClipboard().getContent(PLAIN_TEXT).toString().split("\n").length));
+        assertThat("clipboard should contain three lines", linesNum::get, is(3));
+    }
+
+    @Test
+    public void whenPressControlCSelectedMessagesShouldBeCopiedToClipboard() throws Exception {
+        // given
+        final JFXTreeTableView<Message> table = lookup("#table").query();
+        final List<QueueViewMBean> queues = spyQueueViewMBean(50L, 0L, 1L);
+        initializeTable(table);
+        when(jmxClient.getQueues()).thenReturn(queues);
+
+        // when
+        clickOn(table.getChildrenUnmodifiable().get(1))
+                .press(SHIFT)
+                .push(DOWN)
+                .push(DOWN)
+                .release(SHIFT);
+        press(CONTROL, C).release(CONTROL, C);
+
+        // then
+        final AtomicInteger linesNum = new AtomicInteger(-1);
+        verify(queueViewBean).getName();
+        verify(queueViewBean).browse();
+        verify(queueViewBean, atLeast(1)).getMaxPageSize();
+        verifyNoMoreInteractions(queueViewBean);
+        verifyZeroInteractions(jmxClient);
+        runLater(() -> linesNum.set(Clipboard.getSystemClipboard().getContent(PLAIN_TEXT).toString().split("\n").length));
+        assertThat("clipboard should contain three lines", linesNum::get, is(3));
     }
 
     private void initializeTable(final JFXTreeTableView<Message> table) {
