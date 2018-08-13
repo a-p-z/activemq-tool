@@ -1,5 +1,6 @@
 package apz.activemq.controller;
 
+import apz.activemq.component.ConfirmJFXDialog;
 import apz.activemq.injection.Inject;
 import apz.activemq.jmx.JmxClient;
 import apz.activemq.listeners.QueuesTableSkinListener;
@@ -208,16 +209,20 @@ public class QueuesController implements Initializable {
         Optional.ofNullable(action).ifPresent(ActionEvent::consume);
 
         final Queue selectedQueue = getSelectedQueue();
+        final String bodyMessage = format("You are purging %s", selectedQueue.name.getValue());
+        final Runnable purgeSelectedQueue = () -> {
+            try {
+                selectedQueue.purge();
 
-        try {
-            selectedQueue.purge();
+            } catch (final RuntimeException e) {
+                throw e;
 
-        } catch (final RuntimeException e) {
-            throw e;
+            } finally {
+                selectedQueue.refresh();
+            }
+        };
 
-        } finally {
-            selectedQueue.refresh();
-        }
+        new ConfirmJFXDialog(root, purgeSelectedQueue, "Purge queue", bodyMessage, "Purge");
     }
 
     /**
