@@ -542,6 +542,7 @@ public class MessagesTest extends ApplicationTest {
                 .press(SECONDARY)
                 .release(SECONDARY)
                 .clickOn("#delete");
+        clickOn("#confirm");
 
         // then
         verify(queueViewBean).getName();

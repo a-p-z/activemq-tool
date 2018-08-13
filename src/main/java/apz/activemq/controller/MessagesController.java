@@ -1,5 +1,6 @@
 package apz.activemq.controller;
 
+import apz.activemq.component.ConfirmJFXDialog;
 import apz.activemq.contextmenu.HideColumnContextMenu;
 import apz.activemq.contextmenu.ShowColumnContextMenu;
 import apz.activemq.injection.Inject;
@@ -308,14 +309,22 @@ public class MessagesController implements Initializable {
      */
     public void deleteSelectedMessages() {
 
-        getSelectedMessages().stream()
-                .filter(message -> queue.getValue().removeMessage(message.id.getValue()))
-                .forEach(messages::remove);
+        final List<Message> selectedMessages = getSelectedMessages();
+        final int total = selectedMessages.size();
+        final String headingMessage = format("Delete %d message%c", total, total > 1 ? 's' : '\0');
+        final String bodyMessage = format("You are deleting %d message%c", total, total > 1 ? 's' : '\0');
+        final Runnable deleteSelectedMessages = () -> {
+            selectedMessages.stream()
+                    .filter(message -> queue.getValue().removeMessage(message.id.getValue()))
+                    .forEach(messages::remove);
 
-        scheduledExecutorService.schedule(() -> runLater(() -> {
-            table.sort();
-            applyFilter().changed(search.textProperty(), search.getText(), search.getText());
-        }), 300, MILLISECONDS);
+            scheduledExecutorService.schedule(() -> runLater(() -> {
+                table.sort();
+                applyFilter().changed(search.textProperty(), search.getText(), search.getText());
+            }), 300, MILLISECONDS);
+        };
+
+        new ConfirmJFXDialog(root, deleteSelectedMessages, headingMessage, bodyMessage, "Delete");
     }
 
     /**
