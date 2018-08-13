@@ -7,6 +7,7 @@ import com.jfoenix.controls.JFXTreeTableView;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.Labeled;
+import javafx.scene.input.Clipboard;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 import org.apache.activemq.broker.jmx.BrokerViewMBean;
@@ -21,6 +22,7 @@ import org.testfx.framework.junit.ApplicationTest;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
@@ -36,11 +38,20 @@ import static apz.activemq.utils.AssertUtils.assumeThat;
 import static apz.activemq.utils.MockUtils.spyBrokerViewMBean;
 import static apz.activemq.utils.MockUtils.spyQueueViewMBean;
 import static java.util.stream.Collectors.toList;
+import static javafx.application.Platform.runLater;
+import static javafx.scene.input.DataFormat.PLAIN_TEXT;
+import static javafx.scene.input.KeyCode.C;
+import static javafx.scene.input.KeyCode.CONTROL;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.startsWith;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.atLeast;
+import static org.mockito.Mockito.atMost;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -335,7 +346,7 @@ public class QueuesTest extends ApplicationTest {
         // given
         final JFXTreeTableView<Queue> table = lookup("#table").query();
         final List<QueueViewMBean> queueViewMBeans = spyQueueViewMBean(50L, 0L, 100L);
-        when(jmxClient.getQueues()).thenReturn(queueViewMBeans);
+        given(jmxClient.getQueues()).willReturn(queueViewMBeans);
         initializeTable(table);
 
         // when
@@ -348,6 +359,26 @@ public class QueuesTest extends ApplicationTest {
         assertThat("titles should contain QUEUES ad MESSAGES",
                 () -> lookup("#title").queryAllAs(Label.class).stream().map(Labeled::getText).collect(toList()),
                 containsInAnyOrder("QUEUES", "MESSAGES"));
+    }
+
+    @Test
+    public void whenPressControlCSelectedQueueShouldBeCopiedToClipboard() {
+        // given
+        final JFXTreeTableView<Queue> table = lookup("#table").query();
+        final List<QueueViewMBean> queueViewMBeans = spyQueueViewMBean(50L, 0L, 100L);
+        when(jmxClient.getQueues()).thenReturn(queueViewMBeans);
+        initializeTable(table);
+
+        // when
+        clickOn(table.getChildrenUnmodifiable().get(1));
+        press(CONTROL, C).release(CONTROL, C);
+
+        // then
+        final AtomicReference<String> content = new AtomicReference<>();
+        verify(jmxClient).getQueues();
+        verifyNoMoreInteractions(jmxClient);
+        runLater(() -> content.set(Clipboard.getSystemClipboard().getContent(PLAIN_TEXT).toString()));
+        assertThat("clipboard should contain the queue", content::get, startsWith("Queue{name=queue.test."));
     }
 
     private void initializeTable(final JFXTreeTableView<Queue> table) {

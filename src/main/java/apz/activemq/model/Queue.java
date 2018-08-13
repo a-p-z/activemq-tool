@@ -188,4 +188,15 @@ public class Queue extends RecursiveTreeObject<Queue> {
                 enqueued.getValue(),
                 dequeued.getValue());
     }
+
+    @Override
+    public String toString() {
+        return "Queue{" +
+                "name=" + name.getValue() +
+                ", pending=" + pending.getValue() +
+                ", consumers=" + consumers.getValue() +
+                ", enqueued=" + enqueued.getValue() +
+                ", dequeued=" + dequeued.getValue() +
+                '}';
+    }
 }

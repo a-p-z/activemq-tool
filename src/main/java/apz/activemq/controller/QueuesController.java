@@ -22,6 +22,8 @@ import javafx.fxml.Initializable;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.StackPane;
 
@@ -43,6 +45,7 @@ import static java.util.stream.Collectors.toList;
 import static javafx.application.Platform.runLater;
 import static javafx.beans.binding.Bindings.createStringBinding;
 import static javafx.collections.FXCollections.observableArrayList;
+import static javafx.scene.input.KeyCode.C;
 
 public class QueuesController implements Initializable {
 
@@ -104,6 +107,11 @@ public class QueuesController implements Initializable {
 
         // when double-click on row browse queue
         table.setOnMousePressed(browseQueue());
+        table.setOnKeyPressed(event -> {
+            if (event.isControlDown() && event.getCode() == C) {
+                copySelectedQueueToClipboard();
+            }
+        });
 
         // columns binding
         name.setContextMenu(null);
@@ -299,5 +307,20 @@ public class QueuesController implements Initializable {
      */
     private Queue getSelectedQueue() {
         return table.getSelectionModel().getSelectedItem().getValue();
+    }
+
+    /**
+     * show dialog for copy selected messages
+     */
+    public void copySelectedQueueToClipboard() {
+
+        final Queue selectedQueue = getSelectedQueue();
+        final ClipboardContent clipboardContent = new ClipboardContent();
+
+        clipboardContent.putString(selectedQueue.toString());
+
+        table.getSelectionModel().clearSelection();
+
+        Clipboard.getSystemClipboard().setContent(clipboardContent);
     }
 }
