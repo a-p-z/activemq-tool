@@ -15,12 +15,16 @@ public class MessageRowContextMenu extends ContextMenu {
         requireNonNull(controller, "controller must be not null");
 
         final MenuItem copyItem = new MenuItem("Copy");
+        final MenuItem moveItem = new MenuItem("Move");
         final MenuItem deleteItem = new MenuItem("Delete");
 
-        getItems().addAll(copyItem, deleteItem);
+        getItems().addAll(copyItem, moveItem, deleteItem);
 
         copyItem.setId("copy");
-        copyItem.setOnAction(action -> controller.showCopyDialog());
+        copyItem.setOnAction(action -> controller.copySelectedMessagesTo());
+
+        moveItem.setId("move");
+        moveItem.setOnAction(action -> controller.moveSelectedMessagesTo());
 
         deleteItem.setId("delete");
         deleteItem.setOnAction(action -> controller.deleteSelectedMessages());

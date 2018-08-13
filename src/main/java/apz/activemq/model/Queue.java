@@ -135,6 +135,30 @@ public class Queue extends RecursiveTreeObject<Queue> {
         return result;
     }
 
+    public boolean moveMessageTo(final String messageId, final String destination) {
+
+        requireNonNull(messageId, "messageId must be not null");
+        requireNonNull(destination, "destination must be not null");
+
+        LOGGER.info("moving message {} from {} to {}", messageId, name, destination);
+
+        boolean result;
+
+        try {
+            result = queueView.moveMessageTo(messageId, destination);
+
+        } catch (final Exception e) {
+            LOGGER.error("error moving message " + messageId + " from " + name + " to " + destination + ": " + e.getMessage(), e);
+            return false;
+        }
+
+        if (!result) {
+            LOGGER.error("error moving message " + messageId + " from " + name + " to " + destination);
+        }
+
+        return result;
+    }
+
     @Override
     public boolean equals(final Object o) {
 

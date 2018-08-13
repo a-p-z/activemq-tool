@@ -334,7 +334,7 @@ public class MessagesController implements Initializable {
     /**
      * show dialog for copy selected messages
      */
-    public void showCopyDialog() {
+    public void copySelectedMessagesTo() {
 
         final List<Message> selectedMessages = getSelectedMessages();
         final int total = selectedMessages.size();
@@ -345,6 +345,32 @@ public class MessagesController implements Initializable {
                 .map(StringExpression::getValue)
                 .forEach(messageId -> queue.getValue().copyMessageTo(messageId, destination));
         final Consumer<String> onSelected = destination -> new ConfirmJFXDialog(root, copySelectedMessagesTo.apply(destination), confirmationHeading, destination, "Copy");
+        final SelectDestinationJFXDialog selectDestinationJFXDialog = new SelectDestinationJFXDialog(root, selectHeading, queue.getValue().name.getValue(), onSelected);
+
+        scheduledExecutorService.execute(() -> jmxClient.getQueues().stream()
+                .map(DestinationViewMBean::getName)
+                .forEach(selectDestinationJFXDialog::addDestination));
+    }
+
+    /**
+     * show dialog for move selected messages
+     */
+    public void moveSelectedMessagesTo() {
+
+        final List<Message> selectedMessages = getSelectedMessages();
+        final int total = selectedMessages.size();
+        final String selectHeading = format("Move %d message%c", total, total > 1 ? 's' : '\0');
+        final String confirmationHeading = format("You are moving message%c to:", total > 1 ? 's' : '\0');
+        final Function<String, Runnable> moveSelectedMessagesTo = destination -> () -> {
+            selectedMessages.stream()
+                    .filter(message -> queue.getValue().moveMessageTo(message.id.getValue(), destination))
+                    .forEach(messages::remove);
+            scheduledExecutorService.schedule(() -> runLater(() -> {
+                table.sort();
+                applyFilter().changed(search.textProperty(), search.getText(), search.getText());
+            }), 300, MILLISECONDS);
+        };
+        final Consumer<String> onSelected = destination -> new ConfirmJFXDialog(root, moveSelectedMessagesTo.apply(destination), confirmationHeading, destination, "Move");
         final SelectDestinationJFXDialog selectDestinationJFXDialog = new SelectDestinationJFXDialog(root, selectHeading, queue.getValue().name.getValue(), onSelected);
 
         scheduledExecutorService.execute(() -> jmxClient.getQueues().stream()

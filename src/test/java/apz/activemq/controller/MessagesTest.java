@@ -598,6 +598,51 @@ public class MessagesTest extends ApplicationTest {
         verifyNoMoreInteractions(jmxClient);
     }
 
+    @Test
+    public void whenMoveMessagesTheyShouldBeMoviedToDestinationAndRemovedFromTable() throws Exception {
+        // given
+        final JFXTreeTableView<Message> table = lookup("#table").query();
+        final Label footer = lookup("#footer").query();
+        final List<QueueViewMBean> queues = spyQueueViewMBean(50L,0L, 1L);
+        initializeTable(table);
+        when(jmxClient.getQueues()).thenReturn(queues);
+        when(queueViewBean.moveMessageTo(anyString(), anyString()))
+                .thenReturn(true)
+                .thenReturn(false)
+                .thenReturn(true);
+
+        // when
+        clickOn(table.getChildrenUnmodifiable().get(1))
+                .press(SHIFT)
+                .push(DOWN)
+                .push(DOWN)
+                .release(SHIFT)
+                .press(SECONDARY)
+                .release(SECONDARY)
+                .clickOn("#move");
+        clickOn("#autoCompleteJFXComboBox")
+                .write("california")
+                .moveBy(-120, 30)
+                .press(PRIMARY).release(PRIMARY);
+        clickOn("#select");
+        clickOn("#confirm");
+
+        // then
+        verify(queueViewBean).getName();
+        verify(queueViewBean).browse();
+        verify(queueViewBean, atLeast(1)).getMaxPageSize();
+        verify(queueViewBean, times(3)).moveMessageTo(anyString(), eq("queue.test.california"));
+        verifyNoMoreInteractions(queueViewBean);
+        verify(jmxClient).getQueues();
+        verifyNoMoreInteractions(jmxClient);
+
+        retry(() -> {
+            final int currentItemsCount = table.getCurrentItemsCount();
+            assertThat("table current items count should be 40", currentItemsCount, is(40));
+            assertThat("footer should be 'Showing 40 of 40 (messages are limited by browser page size 400)'", footer.getText(), is("Showing 40 of 40 (messages are limited by browser page size 400)"));
+        });
+    }
+
     private void initializeTable(final JFXTreeTableView<Message> table) {
         messagesController.refresh(null);
         assumeThat("table should have 42 row", table.getRoot()::getChildren, hasSize(42));

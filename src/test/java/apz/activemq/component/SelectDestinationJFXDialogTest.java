@@ -7,7 +7,6 @@ import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
-import org.hamcrest.Matchers;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -16,12 +15,12 @@ import org.testfx.framework.junit.ApplicationTest;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
-import static apz.activemq.utils.AssertUtils.retry;
+import static apz.activemq.utils.AssertUtils.assertThat;
 import static java.util.stream.Collectors.joining;
 import static javafx.scene.input.MouseButton.PRIMARY;
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
@@ -61,8 +60,8 @@ public class SelectDestinationJFXDialogTest extends ApplicationTest {
         final JFXButton button = lookup("#select").query();
 
         verifyZeroInteractions(action);
-        assertThat("heading text should be 'Heading text'", heading.getText(), is("Heading text"));
-        assertThat("button text should be 'Select'", button.getText(), is("Select"));
+        assertThat("heading text should be 'Heading text'", heading::getText, is("Heading text"));
+        assertThat("button text should be 'Select'", button::getText, is("Select"));
     }
 
     @Test
@@ -76,7 +75,7 @@ public class SelectDestinationJFXDialogTest extends ApplicationTest {
 
         // then
         verifyZeroInteractions(action);
-        retry(() -> assertThat("dialog should be closed", closed.get(), is(true)));
+        assertThat("dialog should be closed", closed::get, is(true));
     }
 
     @Test
@@ -85,12 +84,13 @@ public class SelectDestinationJFXDialogTest extends ApplicationTest {
         clickOn("#select");
 
         // then
-        verifyZeroInteractions(action);
-
         final ValidationFacade validationFacade = lookup("#validationFacade").query();
-        final String errors = validationFacade.getValidators().stream().filter(ValidatorBase::getHasErrors).map(ValidatorBase::getMessage).collect(joining(", "));
-        assertThat("error message should be 'destination si required'", errors,
-                Matchers.is("destination si required"));
+        final Supplier<String> errors = () -> validationFacade.getValidators().stream()
+                .filter(ValidatorBase::getHasErrors)
+                .map(ValidatorBase::getMessage)
+                .collect(joining(", "));
+        verifyZeroInteractions(action);
+        assertThat("error message should be 'destination si required'", errors, is("destination si required"));
     }
 
     @Test
@@ -106,7 +106,7 @@ public class SelectDestinationJFXDialogTest extends ApplicationTest {
 
         // then
         verifyZeroInteractions(action);
-        retry(() -> assertThat("dialog should be closed", closed.get(), is(true)));
+        assertThat("dialog should be closed", closed::get, is(true));
     }
 
     @Test
@@ -124,7 +124,7 @@ public class SelectDestinationJFXDialogTest extends ApplicationTest {
         // then
         verify(action).accept("sourc");
         verifyNoMoreInteractions(action);
-        retry(() -> assertThat("dialog should be closed", closed.get(), is(true)));
+        assertThat("dialog should be closed", closed::get, is(true));
     }
 
     @Test
@@ -143,7 +143,7 @@ public class SelectDestinationJFXDialogTest extends ApplicationTest {
         // then
         verify(action).accept("other.source");
         verifyNoMoreInteractions(action);
-        retry(() -> assertThat("dialog should be closed", closed.get(), is(true)));
+        assertThat("dialog should be closed", closed::get, is(true));
     }
 
     @Test
@@ -160,6 +160,6 @@ public class SelectDestinationJFXDialogTest extends ApplicationTest {
         // then
         verify(action).accept("new-source");
         verifyNoMoreInteractions(action);
-        retry(() -> assertThat("dialog should be closed", closed.get(), is(true)));
+        assertThat("dialog should be closed", closed::get, is(true));
     }
 }
