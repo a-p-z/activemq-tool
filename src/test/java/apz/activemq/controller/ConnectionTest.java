@@ -1,5 +1,6 @@
 package apz.activemq.controller;
 
+import apz.activemq.component.SimpleSnackbar;
 import apz.activemq.jmx.JmxClient;
 import com.jfoenix.controls.JFXProgressBar;
 import com.jfoenix.controls.JFXTextField;
@@ -30,9 +31,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.BDDMockito.then;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ConnectionTest extends ApplicationTest {
@@ -46,6 +45,9 @@ public class ConnectionTest extends ApplicationTest {
     @Mock
     private ScheduledExecutorService scheduledExecutorService;
 
+    @Mock
+    private SimpleSnackbar snackbar;
+
     private final StackPane stackPane = new StackPane();
 
     private ConnectionController connectionController;
@@ -58,6 +60,7 @@ public class ConnectionTest extends ApplicationTest {
         clearRegistry();
         register("jmxClient", jmxClient);
         register("scheduledExecutorService", scheduledExecutorService);
+        register("snackbar", snackbar);
 
         connectionController = newInstance(ConnectionController.class);
 
@@ -72,9 +75,10 @@ public class ConnectionTest extends ApplicationTest {
         runLater(() -> connectionController.show(stackPane));
 
         // then
-        verifyZeroInteractions(jmxClient);
-        verifyZeroInteractions(onConnectedAction);
-        verifyZeroInteractions(scheduledExecutorService);
+        then(jmxClient).shouldHaveZeroInteractions();
+        then(onConnectedAction).shouldHaveZeroInteractions();
+        then(scheduledExecutorService).shouldHaveZeroInteractions();
+        then(snackbar).shouldHaveZeroInteractions();
         assertThat("dialog should be shown", lookup("#dialog")::query, notNullValue());
     }
 
@@ -89,10 +93,11 @@ public class ConnectionTest extends ApplicationTest {
 
         // then
         retry(() -> {
-            verifyZeroInteractions(jmxClient);
-            verify(onConnectedAction).handle(any());
-            verifyNoMoreInteractions(onConnectedAction);
-            verifyZeroInteractions(scheduledExecutorService);
+            then(jmxClient).shouldHaveZeroInteractions();
+            then(onConnectedAction).should().handle(any());
+            then(onConnectedAction).shouldHaveNoMoreInteractions();;
+            then(scheduledExecutorService).shouldHaveZeroInteractions();
+            then(snackbar).shouldHaveZeroInteractions();
         });
         assertThat("dialog should be closed", lookup("#dialog")::query, nullValue());
     }
@@ -107,9 +112,10 @@ public class ConnectionTest extends ApplicationTest {
 
         // then
 
-        verifyZeroInteractions(jmxClient);
-        verifyZeroInteractions(onConnectedAction);
-        verifyZeroInteractions(scheduledExecutorService);
+        then(jmxClient).shouldHaveZeroInteractions();
+        then(onConnectedAction).shouldHaveZeroInteractions();
+        then(scheduledExecutorService).shouldHaveZeroInteractions();
+        then(snackbar).shouldHaveZeroInteractions();
         assertThat("progress should not be null", lookup("#progressBar")::query, notNullValue());
         assertThat("progress should be visible", lookup("#progressBar").query()::isVisible, is(true));
         assertThat("progress should be -1.0", lookup("#progressBar").queryAs(JFXProgressBar.class)::getProgress, is(-1.0));
@@ -124,9 +130,10 @@ public class ConnectionTest extends ApplicationTest {
         runLater(() -> connectionController.setConnecting(false));
 
         // then
-        verifyZeroInteractions(jmxClient);
-        verifyZeroInteractions(onConnectedAction);
-        verifyZeroInteractions(scheduledExecutorService);
+        then(jmxClient).shouldHaveZeroInteractions();
+        then(onConnectedAction).shouldHaveZeroInteractions();
+        then(scheduledExecutorService).shouldHaveZeroInteractions();
+        then(snackbar).shouldHaveZeroInteractions();
         assertThat("progress should not be null", lookup("#progressBar")::query, notNullValue());
         assertThat("progress should not be visible", lookup("#progressBar").query()::isVisible, is(false));
         assertThat("progress should be -1.0", lookup("#progressBar").queryAs(JFXProgressBar.class)::getProgress, is(0.0));
@@ -141,18 +148,20 @@ public class ConnectionTest extends ApplicationTest {
         retry(() -> lookup("#host").queryAs(JFXTextField.class).setText("   activemq.test.com   "));
 
         // then
-        verifyZeroInteractions(jmxClient);
-        verifyZeroInteractions(onConnectedAction);
-        verifyZeroInteractions(scheduledExecutorService);
+        then(jmxClient).shouldHaveZeroInteractions();
+        then(onConnectedAction).shouldHaveZeroInteractions();
+        then(scheduledExecutorService).shouldHaveZeroInteractions();
+        then(snackbar).shouldHaveZeroInteractions();
         assertThat("host should be 'activemq.test.com'", connectionController::getHost, is("activemq.test.com"));
     }
 
     @Test
     public void getDefaultPort() {
         // then
-        verifyZeroInteractions(jmxClient);
-        verifyZeroInteractions(onConnectedAction);
-        verifyZeroInteractions(scheduledExecutorService);
+        then(jmxClient).shouldHaveZeroInteractions();
+        then(onConnectedAction).shouldHaveZeroInteractions();
+        then(scheduledExecutorService).shouldHaveZeroInteractions();
+        then(snackbar).shouldHaveZeroInteractions();
         assertThat("default port should be " + DEFAULT_PORT, connectionController::getPort, is(DEFAULT_PORT));
     }
 
@@ -165,9 +174,10 @@ public class ConnectionTest extends ApplicationTest {
         retry(() -> lookup("#port").queryAs(JFXTextField.class).setText("2099"));
 
         // then
-        verifyZeroInteractions(jmxClient);
-        verifyZeroInteractions(onConnectedAction);
-        verifyZeroInteractions(scheduledExecutorService);
+        then(jmxClient).shouldHaveZeroInteractions();
+        then(onConnectedAction).shouldHaveZeroInteractions();
+        then(scheduledExecutorService).shouldHaveZeroInteractions();
+        then(snackbar).shouldHaveZeroInteractions();
         assertThat("port should be 2099", connectionController::getPort, is(2099));
     }
 
@@ -181,10 +191,11 @@ public class ConnectionTest extends ApplicationTest {
         retry(() -> clickOn("#connect"));
 
         // then
-        verifyZeroInteractions(jmxClient);
-        verifyZeroInteractions(onConnectedAction);
-        verify(scheduledExecutorService).submit(any(Runnable.class));
-        verifyNoMoreInteractions(scheduledExecutorService);
+        then(jmxClient).shouldHaveZeroInteractions();
+        then(onConnectedAction).shouldHaveZeroInteractions();
+        then(scheduledExecutorService).should().submit(any(Runnable.class));
+        then(scheduledExecutorService).shouldHaveNoMoreInteractions();
+        then(snackbar).shouldHaveZeroInteractions();
     }
 
     @Test
@@ -202,9 +213,10 @@ public class ConnectionTest extends ApplicationTest {
                 .filter(ValidatorBase::getHasErrors)
                 .map(ValidatorBase::getMessage)
                 .collect(joining(", "));
-        verifyZeroInteractions(jmxClient);
-        verifyZeroInteractions(onConnectedAction);
-        verifyZeroInteractions(scheduledExecutorService);
+        then(jmxClient).shouldHaveZeroInteractions();
+        then(onConnectedAction).shouldHaveZeroInteractions();
+        then(scheduledExecutorService).shouldHaveZeroInteractions();
+        then(snackbar).shouldHaveZeroInteractions();
         assertThat("error message should be 'Service URL contains non-ASCII character 0xa7'", errors,
                 is("Service URL contains non-ASCII character 0xa7"));
     }
@@ -223,9 +235,10 @@ public class ConnectionTest extends ApplicationTest {
                 .filter(ValidatorBase::getHasErrors)
                 .map(ValidatorBase::getMessage)
                 .collect(joining(", "));
-        verifyZeroInteractions(jmxClient);
-        verifyZeroInteractions(onConnectedAction);
-        verifyZeroInteractions(scheduledExecutorService);
+        then(jmxClient).shouldHaveZeroInteractions();
+        then(onConnectedAction).shouldHaveZeroInteractions();
+        then(scheduledExecutorService).shouldHaveZeroInteractions();
+        then(snackbar).shouldHaveZeroInteractions();
         assertThat("error message should be 'host is required'", errors, is("host is required"));
     }
 
@@ -242,9 +255,10 @@ public class ConnectionTest extends ApplicationTest {
         final JFXTextField hostTextField = lookup("#host").query();
         final Supplier<Boolean> hasErrors = () -> hostTextField.getValidators().stream()
                 .noneMatch(ValidatorBase::getHasErrors);
-        verifyZeroInteractions(jmxClient);
-        verifyZeroInteractions(onConnectedAction);
-        verifyZeroInteractions(scheduledExecutorService);
+        then(jmxClient).shouldHaveZeroInteractions();
+        then(onConnectedAction).shouldHaveZeroInteractions();
+        then(scheduledExecutorService).shouldHaveZeroInteractions();
+        then(snackbar).shouldHaveZeroInteractions();
         assertThat("error message should be reset", hasErrors, is(false));
     }
 }

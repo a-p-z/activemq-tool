@@ -1,5 +1,6 @@
 package apz.activemq.controller;
 
+import apz.activemq.component.SimpleSnackbar;
 import apz.activemq.jmx.JmxClient;
 import apz.activemq.model.Message;
 import apz.activemq.model.Queue;
@@ -32,6 +33,7 @@ import static apz.activemq.Configuration.configureObjectMapper;
 import static apz.activemq.Configuration.configureScheduledExecutorService;
 import static apz.activemq.controller.ControllerFactory.newInstance;
 import static apz.activemq.injection.Injector.clearRegistry;
+import static apz.activemq.injection.Injector.get;
 import static apz.activemq.injection.Injector.register;
 import static apz.activemq.utils.AssertUtils.assertThat;
 import static apz.activemq.utils.AssertUtils.assumeThat;
@@ -57,12 +59,10 @@ import static org.hamcrest.Matchers.startsWith;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.verifyZeroInteractions;
-import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.Silent.class)
 public class MessagesTest extends ApplicationTest {
@@ -75,20 +75,23 @@ public class MessagesTest extends ApplicationTest {
     @Mock
     private QueuesController queuesController;
 
+    @Mock
+    private SimpleSnackbar snackbar;
+
     private MessagesController messagesController;
 
     @Override
     public void start(final Stage stage) {
 
-
         final StackPane stackPane = new StackPane();
         final Scene scene = new Scene(stackPane, 800, 580);
 
         clearRegistry();
-        final ObjectMapper objectMapper = configureObjectMapper();
         register("jmxClient", jmxClient);
+        register("snackbar", snackbar);
+        configureObjectMapper();
         configureScheduledExecutorService();
-        configureMessageToStringConverter(objectMapper);
+        configureMessageToStringConverter(get("objectMapper", ObjectMapper.class));
 
         messagesController = newInstance(MessagesController.class);
         messagesController.setQueue(new Queue(queueViewBean));
@@ -106,12 +109,13 @@ public class MessagesTest extends ApplicationTest {
         moveTo("#queueName");
 
         // then
-        verify(queueViewBean).getName();
-        verify(queueViewBean, atLeast(1)).getMaxPageSize();
-        verifyNoMoreInteractions(queueViewBean);
-        verifyZeroInteractions(jmxClient);
-        verify(queuesController).addChild(any());
-        verifyNoMoreInteractions(queuesController);
+        then(queueViewBean).should().getName();
+        then(queueViewBean).should(atLeast(1)).getMaxPageSize();
+        then(queueViewBean).shouldHaveNoMoreInteractions();
+        then(jmxClient).shouldHaveZeroInteractions();
+        then(queuesController).should().addChild(any());
+        then(queuesController).shouldHaveNoMoreInteractions();
+        then(snackbar).shouldHaveZeroInteractions();
         assertThat("separator should be '<'", lookup("#separator").queryLabeled()::getText, is("<"));
     }
 
@@ -122,12 +126,13 @@ public class MessagesTest extends ApplicationTest {
                 .moveTo("#title");
 
         // then
-        verify(queueViewBean).getName();
-        verify(queueViewBean, atLeast(1)).getMaxPageSize();
-        verifyNoMoreInteractions(queueViewBean);
-        verifyZeroInteractions(jmxClient);
-        verify(queuesController).addChild(any());
-        verifyNoMoreInteractions(queuesController);
+        then(queueViewBean).should().getName();
+        then(queueViewBean).should(atLeast(1)).getMaxPageSize();
+        then(queueViewBean).shouldHaveNoMoreInteractions();
+        then(jmxClient).shouldHaveZeroInteractions();
+        then(queuesController).should().addChild(any());
+        then(queuesController).shouldHaveNoMoreInteractions();
+        then(snackbar).shouldHaveZeroInteractions();
         assertThat("separator should be '>'", lookup("#separator").queryLabeled()::getText, is(">"));
     }
 
@@ -137,17 +142,18 @@ public class MessagesTest extends ApplicationTest {
         clickOn("#queueName");
 
         // then
-        verify(queueViewBean).getName();
-        verify(queueViewBean).getQueueSize();
-        verify(queueViewBean).getConsumerCount();
-        verify(queueViewBean).getEnqueueCount();
-        verify(queueViewBean).getDequeueCount();
-        verify(queueViewBean, atLeast(1)).getMaxPageSize();
-        verifyNoMoreInteractions(queueViewBean);
-        verifyZeroInteractions(jmxClient);
-        verify(queuesController).addChild(any());
-        verify(queuesController).removeChild(any());
-        verifyNoMoreInteractions(queuesController);
+        then(queueViewBean).should().getName();
+        then(queueViewBean).should().getQueueSize();
+        then(queueViewBean).should().getConsumerCount();
+        then(queueViewBean).should().getEnqueueCount();
+        then(queueViewBean).should().getDequeueCount();
+        then(queueViewBean).should(atLeast(1)).getMaxPageSize();
+        then(queueViewBean).shouldHaveNoMoreInteractions();
+        then(jmxClient).shouldHaveZeroInteractions();
+        then(queuesController).should().addChild(any());
+        then(queuesController).should().removeChild(any());
+        then(queuesController).shouldHaveNoMoreInteractions();
+        then(snackbar).shouldHaveZeroInteractions();
     }
 
     @Test
@@ -161,11 +167,12 @@ public class MessagesTest extends ApplicationTest {
 
         // then
         final Supplier<String> getFirstRowMessageId = () -> table.getRoot().getChildren().get(0).getValue().id.getValue();
-        verify(queueViewBean).getName();
-        verify(queueViewBean).browse();
-        verify(queueViewBean, atLeast(1)).getMaxPageSize();
-        verifyNoMoreInteractions(queueViewBean);
-        verifyZeroInteractions(jmxClient);
+        then(queueViewBean).should().getName();
+        then(queueViewBean).should().browse();
+        then(queueViewBean).should(atLeast(1)).getMaxPageSize();
+        then(queueViewBean).shouldHaveNoMoreInteractions();
+        then(jmxClient).shouldHaveZeroInteractions();
+        then(snackbar).shouldHaveZeroInteractions();
         assertThat("table should have 42 rows", table.getRoot()::getChildren, hasSize(42));
         assertThat("the id of the first row should start with 'ID:producer.test.com'", getFirstRowMessageId, startsWith("ID:producer.test.com"));
         assertThat("footer should be 'Showing 42 of 42 (messages are limited by browser page size 400)'", footer::getText, is("Showing 42 of 42 (messages are limited by browser page size 400)"));
@@ -184,11 +191,12 @@ public class MessagesTest extends ApplicationTest {
 
         // then
         final Function<Integer, String> messageId = i -> table.getRoot().getChildren().get(i).getValue().id.getValue();
-        verify(queueViewBean).getName();
-        verify(queueViewBean, times(2)).browse();
-        verify(queueViewBean, atLeast(1)).getMaxPageSize();
-        verifyNoMoreInteractions(queueViewBean);
-        verifyZeroInteractions(jmxClient);
+        then(queueViewBean).should().getName();
+        then(queueViewBean).should(times(2)).browse();
+        then(queueViewBean).should(atLeast(1)).getMaxPageSize();
+        then(queueViewBean).shouldHaveNoMoreInteractions();
+        then(jmxClient).shouldHaveZeroInteractions();
+        then(snackbar).shouldHaveZeroInteractions();
         assertThat("table should have 42 rows", table.getRoot()::getChildren, hasSize(42));
         assertThat("footer should be 'Showing 42 of 42 (messages are limited by browser page size 400)'", footer::getText, is("Showing 42 of 42 (messages are limited by browser page size 400)"));
         IntStream.range(0, 41).boxed().forEach(i -> {
@@ -211,11 +219,12 @@ public class MessagesTest extends ApplicationTest {
                 .write(messageId.substring(26, 39));
 
         // then
-        verify(queueViewBean).getName();
-        verify(queueViewBean).browse();
-        verify(queueViewBean, atLeast(1)).getMaxPageSize();
-        verifyNoMoreInteractions(queueViewBean);
-        verifyZeroInteractions(jmxClient);
+        then(queueViewBean).should().getName();
+        then(queueViewBean).should().browse();
+        then(queueViewBean).should(atLeast(1)).getMaxPageSize();
+        then(queueViewBean).shouldHaveNoMoreInteractions();
+        then(jmxClient).shouldHaveZeroInteractions();
+        then(snackbar).shouldHaveZeroInteractions();
         assertThat("table should have 1 row", table.getRoot()::getChildren, hasSize(1));
         assertThat("the first row should be '" + messageId + "'", table.getRoot().getChildren().get(0).getValue().id::getValue, is(messageId));
         assertThat("footer should be 'Showing 1 of 42 (messages are limited by browser page size 400)'", footer::getText, is("Showing 1 of 42 (messages are limited by browser page size 400)"));
@@ -233,11 +242,12 @@ public class MessagesTest extends ApplicationTest {
                 .write("NON-PERSISTENT");
 
         // then
-        verify(queueViewBean).getName();
-        verify(queueViewBean).browse();
-        verify(queueViewBean, atLeast(1)).getMaxPageSize();
-        verifyNoMoreInteractions(queueViewBean);
-        verifyZeroInteractions(jmxClient);
+        then(queueViewBean).should().getName();
+        then(queueViewBean).should().browse();
+        then(queueViewBean).should(atLeast(1)).getMaxPageSize();
+        then(queueViewBean).shouldHaveNoMoreInteractions();
+        then(jmxClient).shouldHaveZeroInteractions();
+        then(snackbar).shouldHaveZeroInteractions();
         assertThat("table current items count should be less then 42", table::getCurrentItemsCount, lessThan(42));
         assertThat("footer should be 'Showing " + table.getCurrentItemsCount() + " of 42 (messages are limited by browser page size 400)'", footer::getText, is("Showing " + table.getCurrentItemsCount() + " of 42 (messages are limited by browser page size 400)"));
         IntStream.range(0, table.getCurrentItemsCount()).boxed().forEach(i -> {
@@ -261,11 +271,12 @@ public class MessagesTest extends ApplicationTest {
         clickOn("#refresh");
 
         // then
-        verify(queueViewBean).getName();
-        verify(queueViewBean, times(2)).browse();
-        verify(queueViewBean, atLeast(1)).getMaxPageSize();
-        verifyNoMoreInteractions(queueViewBean);
-        verifyZeroInteractions(jmxClient);
+        then(queueViewBean).should().getName();
+        then(queueViewBean).should(times(2)).browse();
+        then(queueViewBean).should(atLeast(1)).getMaxPageSize();
+        then(queueViewBean).shouldHaveNoMoreInteractions();
+        then(jmxClient).shouldHaveZeroInteractions();
+        then(snackbar).shouldHaveZeroInteractions();
         assertThat("table current items count should be less then 42", table::getCurrentItemsCount, lessThan(42));
         assertThat("footer should be 'Showing " + table.getCurrentItemsCount() + " of 42 (messages are limited by browser page size 400)'", footer::getText, is("Showing " + table.getCurrentItemsCount() + " of 42 (messages are limited by browser page size 400)"));
         IntStream.range(0, table.getCurrentItemsCount()).boxed().forEach(i -> {
@@ -288,11 +299,12 @@ public class MessagesTest extends ApplicationTest {
 
         // then
         final Supplier<List<TreeTableColumn<Message, ?>>> visibleColumns = () -> table.getColumns().stream().filter(TableColumnBase::isVisible).collect(collectingAndThen(toList(), Collections::unmodifiableList));
-        verify(queueViewBean).getName();
-        verify(queueViewBean).browse();
-        verify(queueViewBean, atLeast(1)).getMaxPageSize();
-        verifyNoMoreInteractions(queueViewBean);
-        verifyZeroInteractions(jmxClient);
+        then(queueViewBean).should().getName();
+        then(queueViewBean).should().browse();
+        then(queueViewBean).should(atLeast(1)).getMaxPageSize();
+        then(queueViewBean).shouldHaveNoMoreInteractions();
+        then(jmxClient).shouldHaveZeroInteractions();
+        then(snackbar).shouldHaveZeroInteractions();
         assertThat("visible columns should be 21", visibleColumns, hasSize(21));
     }
 
@@ -313,11 +325,12 @@ public class MessagesTest extends ApplicationTest {
 
         // then
         final Supplier<List<TreeTableColumn<Message, ?>>> visibleColumns = () -> table.getColumns().stream().filter(TableColumnBase::isVisible).collect(collectingAndThen(toList(), Collections::unmodifiableList));
-        verify(queueViewBean).getName();
-        verify(queueViewBean).browse();
-        verify(queueViewBean, atLeast(1)).getMaxPageSize();
-        verifyNoMoreInteractions(queueViewBean);
-        verifyZeroInteractions(jmxClient);
+        then(queueViewBean).should().getName();
+        then(queueViewBean).should().browse();
+        then(queueViewBean).should(atLeast(1)).getMaxPageSize();
+        then(queueViewBean).shouldHaveNoMoreInteractions();
+        then(jmxClient).shouldHaveZeroInteractions();
+        then(snackbar).shouldHaveZeroInteractions();
         assertThat("visible columns should be 2", visibleColumns, hasSize(2));
         assertThat("first column should be 'Message id", visibleColumns.get().get(0)::getText, is("Message id"));
         assertThat("second column should be '+'", visibleColumns.get().get(1)::getText, is("+"));
@@ -340,11 +353,12 @@ public class MessagesTest extends ApplicationTest {
         final Supplier<List<TreeTableColumn<Message, ?>>> visibleColumns2 = () -> table.getColumns().stream()
                 .filter(TableColumnBase::isVisible)
                 .collect(collectingAndThen(toList(), Collections::unmodifiableList));
-        verify(queueViewBean).getName();
-        verify(queueViewBean).browse();
-        verify(queueViewBean, atLeast(1)).getMaxPageSize();
-        verifyNoMoreInteractions(queueViewBean);
-        verifyZeroInteractions(jmxClient);
+        then(queueViewBean).should().getName();
+        then(queueViewBean).should().browse();
+        then(queueViewBean).should(atLeast(1)).getMaxPageSize();
+        then(queueViewBean).shouldHaveNoMoreInteractions();
+        then(jmxClient).shouldHaveZeroInteractions();
+        then(snackbar).shouldHaveZeroInteractions();
         assertThat("visible columns should be " + (initialVisibleColumnSize - 1), visibleColumns2, hasSize(initialVisibleColumnSize - 1));
         assertThat("table should not contain 'Mode' column", () -> visibleColumns2.get().stream().map(TableColumnBase::getText).collect(toList()), not(hasItem("Mode")));
     }
@@ -370,11 +384,12 @@ public class MessagesTest extends ApplicationTest {
         final Supplier<List<TreeTableColumn<Message, ?>>> visibleColumns2 = () -> table.getColumns().stream()
                 .filter(TableColumnBase::isVisible)
                 .collect(collectingAndThen(toList(), Collections::unmodifiableList));
-        verify(queueViewBean).getName();
-        verify(queueViewBean).browse();
-        verify(queueViewBean, atLeast(1)).getMaxPageSize();
-        verifyNoMoreInteractions(queueViewBean);
-        verifyZeroInteractions(jmxClient);
+        then(queueViewBean).should().getName();
+        then(queueViewBean).should().browse();
+        then(queueViewBean).should(atLeast(1)).getMaxPageSize();
+        then(queueViewBean).shouldHaveNoMoreInteractions();
+        then(jmxClient).shouldHaveZeroInteractions();
+        then(snackbar).shouldHaveZeroInteractions();
         assertThat("visible columns should be " + (initialVisibleColumnSize), visibleColumns2, hasSize(initialVisibleColumnSize));
         assertThat("table should not contain 'Mode' column", () -> visibleColumns2.get().stream().map(TableColumnBase::getText).collect(toList()), hasItem("Mode"));
     }
@@ -398,11 +413,12 @@ public class MessagesTest extends ApplicationTest {
         final Supplier<List<TreeTableColumn<Message, ?>>> visibleColumns2 = () -> table.getColumns().stream()
                 .filter(TableColumnBase::isVisible)
                 .collect(collectingAndThen(toList(), Collections::unmodifiableList));
-        verify(queueViewBean).getName();
-        verify(queueViewBean).browse();
-        verify(queueViewBean, atLeast(1)).getMaxPageSize();
-        verifyNoMoreInteractions(queueViewBean);
-        verifyZeroInteractions(jmxClient);
+        then(queueViewBean).should().getName();
+        then(queueViewBean).should().browse();
+        then(queueViewBean).should(atLeast(1)).getMaxPageSize();
+        then(queueViewBean).shouldHaveNoMoreInteractions();
+        then(jmxClient).shouldHaveZeroInteractions();
+        then(snackbar).shouldHaveZeroInteractions();
         assertThat("visible columns should be " + (initialVisibleColumnSize + 1), visibleColumns2, hasSize(initialVisibleColumnSize + 1));
         assertThat("new column should be 'Body'", visibleColumns2.get().get(initialVisibleColumnSize - 1)::getText, is("Body"));
     }
@@ -420,11 +436,12 @@ public class MessagesTest extends ApplicationTest {
                 .write(body);
 
         // then
-        verify(queueViewBean).getName();
-        verify(queueViewBean).browse();
-        verify(queueViewBean, atLeast(1)).getMaxPageSize();
-        verifyNoMoreInteractions(queueViewBean);
-        verifyZeroInteractions(jmxClient);
+        then(queueViewBean).should().getName();
+        then(queueViewBean).should().browse();
+        then(queueViewBean).should(atLeast(1)).getMaxPageSize();
+        then(queueViewBean).shouldHaveNoMoreInteractions();
+        then(jmxClient).shouldHaveZeroInteractions();
+        then(snackbar).shouldHaveZeroInteractions();
         assertThat("table current items count should be 0", table::getCurrentItemsCount, is(0));
         assertThat("footer should be 'Showing 0 of 42 (messages are limited by browser page size 400)'", footer::getText, is("Showing 0 of 42 (messages are limited by browser page size 400)"));
     }
@@ -446,11 +463,12 @@ public class MessagesTest extends ApplicationTest {
                 .write(body);
 
         // then
-        verify(queueViewBean).getName();
-        verify(queueViewBean).browse();
-        verify(queueViewBean, atLeast(1)).getMaxPageSize();
-        verifyNoMoreInteractions(queueViewBean);
-        verifyZeroInteractions(jmxClient);
+        then(queueViewBean).should().getName();
+        then(queueViewBean).should().browse();
+        then(queueViewBean).should(atLeast(1)).getMaxPageSize();
+        then(queueViewBean).shouldHaveNoMoreInteractions();
+        then(jmxClient).shouldHaveZeroInteractions();
+        then(snackbar).shouldHaveZeroInteractions();
         assertThat("table current items count should be 1", table::getCurrentItemsCount, is(1));
         assertThat("footer should be 'Showing 1 of 42 (messages are limited by browser page size 400)'", footer::getText, is("Showing 1 of 42 (messages are limited by browser page size 400)"));
         assertThat("body of message should be '" + body + "'", table.getRoot().getChildren().get(0).getValue().body::getValue, is(body));
@@ -475,11 +493,12 @@ public class MessagesTest extends ApplicationTest {
         final Supplier<List<TreeTableColumn<Message, ?>>> visibleColumns2 = () -> table.getColumns().stream()
                 .filter(TableColumnBase::isVisible)
                 .collect(collectingAndThen(toList(), Collections::unmodifiableList));
-        verify(queueViewBean).getName();
-        verify(queueViewBean).browse();
-        verify(queueViewBean, atLeast(1)).getMaxPageSize();
-        verifyNoMoreInteractions(queueViewBean);
-        verifyZeroInteractions(jmxClient);
+        then(queueViewBean).should().getName();
+        then(queueViewBean).should().browse();
+        then(queueViewBean).should(atLeast(1)).getMaxPageSize();
+        then(queueViewBean).shouldHaveNoMoreInteractions();
+        then(jmxClient).shouldHaveZeroInteractions();
+        then(snackbar).shouldHaveZeroInteractions();
         assertThat("visible columns should be " + (initialVisibleColumnSize + 1), visibleColumns2, hasSize(initialVisibleColumnSize + 1));
         assertThat("new column should be 'exceptionType'", visibleColumns2.get().get(initialVisibleColumnSize - 1)::getText, is("jobId"));
     }
@@ -501,11 +520,12 @@ public class MessagesTest extends ApplicationTest {
                 .write(jobId);
 
         // then
-        verify(queueViewBean).getName();
-        verify(queueViewBean).browse();
-        verify(queueViewBean, atLeast(1)).getMaxPageSize();
-        verifyNoMoreInteractions(queueViewBean);
-        verifyZeroInteractions(jmxClient);
+        then(queueViewBean).should().getName();
+        then(queueViewBean).should().browse();
+        then(queueViewBean).should(atLeast(1)).getMaxPageSize();
+        then(queueViewBean).shouldHaveNoMoreInteractions();
+        then(jmxClient).shouldHaveZeroInteractions();
+        then(snackbar).shouldHaveZeroInteractions();
         assertThat("table current items count should be 1", table::getCurrentItemsCount, is(1));
         assertThat("footer should be 'Showing 1 of 42 (messages are limited by browser page size 400)'", footer::getText, is("Showing 1 of 42 (messages are limited by browser page size 400)"));
         assertThat("jobId of message should be '" + jobId + "'", () -> table.getRoot().getChildren().get(0).getValue().messageUserProperties.getValue().get("jobId"), is(jobId));
@@ -524,11 +544,12 @@ public class MessagesTest extends ApplicationTest {
                 .write(jobId);
 
         // then
-        verify(queueViewBean).getName();
-        verify(queueViewBean).browse();
-        verify(queueViewBean, atLeast(1)).getMaxPageSize();
-        verifyNoMoreInteractions(queueViewBean);
-        verifyZeroInteractions(jmxClient);
+        then(queueViewBean).should().getName();
+        then(queueViewBean).should().browse();
+        then(queueViewBean).should(atLeast(1)).getMaxPageSize();
+        then(queueViewBean).shouldHaveNoMoreInteractions();
+        then(jmxClient).shouldHaveZeroInteractions();
+        then(snackbar).shouldHaveZeroInteractions();
         assertThat("table current items count should be 0", table::getCurrentItemsCount, is(0));
         assertThat("footer should be 'Showing 0 of 42 (messages are limited by browser page size 400)'", footer::getText, is("Showing 0 of 42 (messages are limited by browser page size 400)"));
     }
@@ -539,10 +560,10 @@ public class MessagesTest extends ApplicationTest {
         final JFXTreeTableView<Message> table = lookup("#table").query();
         final Label footer = lookup("#footer").query();
         initializeTable(table);
-        when(queueViewBean.removeMessage(anyString()))
-                .thenReturn(true)
-                .thenReturn(false)
-                .thenReturn(true);
+        given(queueViewBean.removeMessage(anyString()))
+                .willReturn(true)
+                .willReturn(false)
+                .willReturn(true);
 
         // when
         clickOn(table.getChildrenUnmodifiable().get(1))
@@ -556,12 +577,14 @@ public class MessagesTest extends ApplicationTest {
         retry(() -> clickOn("#confirm"));
 
         // then
-        verify(queueViewBean).getName();
-        verify(queueViewBean).browse();
-        verify(queueViewBean, atLeast(1)).getMaxPageSize();
-        verify(queueViewBean, times(3)).removeMessage(anyString());
-        verifyNoMoreInteractions(queueViewBean);
-        verifyZeroInteractions(jmxClient);
+        then(queueViewBean).should().getName();
+        then(queueViewBean).should().browse();
+        then(queueViewBean).should(atLeast(1)).getMaxPageSize();
+        then(queueViewBean).should(times(3)).removeMessage(anyString());
+        then(queueViewBean).shouldHaveNoMoreInteractions();
+        then(jmxClient).shouldHaveZeroInteractions();
+        then(snackbar).should().warn(any());
+        then(snackbar).shouldHaveNoMoreInteractions();
         assertThat("table current items count should be 40", table::getCurrentItemsCount, is(40));
         assertThat("footer should be 'Showing 40 of 40 (messages are limited by browser page size 400)'", footer::getText, is("Showing 40 of 40 (messages are limited by browser page size 400)"));
     }
@@ -572,11 +595,11 @@ public class MessagesTest extends ApplicationTest {
         final JFXTreeTableView<Message> table = lookup("#table").query();
         final List<QueueViewMBean> queues = spyQueueViewMBean(50L, 0L, 1L);
         initializeTable(table);
-        when(jmxClient.getQueues()).thenReturn(queues);
-        when(queueViewBean.copyMessageTo(anyString(), anyString()))
-                .thenReturn(true)
-                .thenReturn(false)
-                .thenReturn(true);
+        given(jmxClient.getQueues()).willReturn(queues);
+        given(queueViewBean.copyMessageTo(anyString(), anyString()))
+                .willReturn(true)
+                .willReturn(false)
+                .willReturn(true);
 
         // when
         clickOn(table.getChildrenUnmodifiable().get(1))
@@ -595,13 +618,15 @@ public class MessagesTest extends ApplicationTest {
         retry(() -> clickOn("#confirm"));
 
         // then
-        verify(queueViewBean).getName();
-        verify(queueViewBean).browse();
-        verify(queueViewBean, atLeast(1)).getMaxPageSize();
-        verify(queueViewBean, times(3)).copyMessageTo(anyString(), eq("queue.test.california"));
-        verifyNoMoreInteractions(queueViewBean);
-        verify(jmxClient).getQueues();
-        verifyNoMoreInteractions(jmxClient);
+        then(queueViewBean).should().getName();
+        then(queueViewBean).should().browse();
+        then(queueViewBean).should(atLeast(1)).getMaxPageSize();
+        then(queueViewBean).should(times(3)).copyMessageTo(anyString(), eq("queue.test.california"));
+        then(queueViewBean).shouldHaveNoMoreInteractions();
+        then(jmxClient).should().getQueues();
+        then(queueViewBean).shouldHaveNoMoreInteractions();
+        then(snackbar).should().warn(any());
+        then(snackbar).shouldHaveNoMoreInteractions();
     }
 
     @Test
@@ -611,11 +636,11 @@ public class MessagesTest extends ApplicationTest {
         final Label footer = lookup("#footer").query();
         final List<QueueViewMBean> queues = spyQueueViewMBean(50L, 0L, 1L);
         initializeTable(table);
-        when(jmxClient.getQueues()).thenReturn(queues);
-        when(queueViewBean.moveMessageTo(anyString(), anyString()))
-                .thenReturn(true)
-                .thenReturn(false)
-                .thenReturn(true);
+        given(jmxClient.getQueues()).willReturn(queues);
+        given(queueViewBean.moveMessageTo(anyString(), anyString()))
+                .willReturn(true)
+                .willReturn(false)
+                .willReturn(true);
 
         // when
         clickOn(table.getChildrenUnmodifiable().get(1))
@@ -634,13 +659,15 @@ public class MessagesTest extends ApplicationTest {
         clickOn("#confirm");
 
         // then
-        verify(queueViewBean).getName();
-        verify(queueViewBean).browse();
-        verify(queueViewBean, atLeast(1)).getMaxPageSize();
-        verify(queueViewBean, times(3)).moveMessageTo(anyString(), eq("queue.test.california"));
-        verifyNoMoreInteractions(queueViewBean);
-        verify(jmxClient).getQueues();
-        verifyNoMoreInteractions(jmxClient);
+        then(queueViewBean).should().getName();
+        then(queueViewBean).should().browse();
+        then(queueViewBean).should(atLeast(1)).getMaxPageSize();
+        then(queueViewBean).should(times(3)).moveMessageTo(anyString(), eq("queue.test.california"));
+        then(queueViewBean).shouldHaveNoMoreInteractions();
+        then(jmxClient).should().getQueues();
+        then(queueViewBean).shouldHaveNoMoreInteractions();
+        then(snackbar).should().warn(any());
+        then(snackbar).shouldHaveNoMoreInteractions();
         assertThat("table current items count should be 40", table::getCurrentItemsCount, is(40));
         assertThat("footer should be 'Showing 40 of 40 (messages are limited by browser page size 400)'", footer::getText, is("Showing 40 of 40 (messages are limited by browser page size 400)"));
     }
@@ -651,7 +678,7 @@ public class MessagesTest extends ApplicationTest {
         final JFXTreeTableView<Message> table = lookup("#table").query();
         final List<QueueViewMBean> queues = spyQueueViewMBean(50L, 0L, 1L);
         initializeTable(table);
-        when(jmxClient.getQueues()).thenReturn(queues);
+        given(jmxClient.getQueues()).willReturn(queues);
 
         // when
         clickOn(table.getChildrenUnmodifiable().get(1))
@@ -665,11 +692,13 @@ public class MessagesTest extends ApplicationTest {
 
         // then
         final AtomicInteger linesNum = new AtomicInteger(-1);
-        verify(queueViewBean).getName();
-        verify(queueViewBean).browse();
-        verify(queueViewBean, atLeast(1)).getMaxPageSize();
-        verifyNoMoreInteractions(queueViewBean);
-        verifyZeroInteractions(jmxClient);
+        then(queueViewBean).should().getName();
+        then(queueViewBean).should().browse();
+        then(queueViewBean).should(atLeast(1)).getMaxPageSize();
+        then(queueViewBean).shouldHaveNoMoreInteractions();
+        then(jmxClient).shouldHaveZeroInteractions();
+        then(snackbar).should().info(any());
+        then(snackbar).shouldHaveNoMoreInteractions();
         runLater(() -> linesNum.set(Clipboard.getSystemClipboard().getContent(PLAIN_TEXT).toString().split("\n").length));
         assertThat("clipboard should contain three lines", linesNum::get, is(3));
     }
@@ -680,7 +709,7 @@ public class MessagesTest extends ApplicationTest {
         final JFXTreeTableView<Message> table = lookup("#table").query();
         final List<QueueViewMBean> queues = spyQueueViewMBean(50L, 0L, 1L);
         initializeTable(table);
-        when(jmxClient.getQueues()).thenReturn(queues);
+        given(jmxClient.getQueues()).willReturn(queues);
 
         // when
         clickOn(table.getChildrenUnmodifiable().get(1))
@@ -692,11 +721,13 @@ public class MessagesTest extends ApplicationTest {
 
         // then
         final AtomicInteger linesNum = new AtomicInteger(-1);
-        verify(queueViewBean).getName();
-        verify(queueViewBean).browse();
-        verify(queueViewBean, atLeast(1)).getMaxPageSize();
-        verifyNoMoreInteractions(queueViewBean);
-        verifyZeroInteractions(jmxClient);
+        then(queueViewBean).should().getName();
+        then(queueViewBean).should().browse();
+        then(queueViewBean).should(atLeast(1)).getMaxPageSize();
+        then(queueViewBean).shouldHaveNoMoreInteractions();
+        then(jmxClient).shouldHaveZeroInteractions();
+        then(snackbar).should().info(any());
+        then(snackbar).shouldHaveNoMoreInteractions();
         runLater(() -> linesNum.set(Clipboard.getSystemClipboard().getContent(PLAIN_TEXT).toString().split("\n").length));
         assertThat("clipboard should contain three lines", linesNum::get, is(3));
     }

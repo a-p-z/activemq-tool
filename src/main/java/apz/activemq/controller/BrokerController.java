@@ -1,11 +1,11 @@
 package apz.activemq.controller;
 
+import apz.activemq.component.SimpleSnackbar;
 import apz.activemq.injection.Inject;
 import apz.activemq.jmx.JmxClient;
 import apz.activemq.model.Broker;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXSpinner;
-import com.sun.istack.internal.Nullable;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Label;
@@ -16,11 +16,14 @@ import org.apache.activemq.broker.jmx.BrokerViewMBean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.net.URL;
 import java.util.Optional;
 import java.util.ResourceBundle;
 
 import static com.jfoenix.effects.JFXDepthManager.setDepth;
+import static java.lang.String.format;
 import static javafx.application.Platform.runLater;
 
 public class BrokerController implements Initializable {
@@ -69,9 +72,13 @@ public class BrokerController implements Initializable {
     @Inject
     private JmxClient jmxClient;
 
+    @Inject
+    private SimpleSnackbar snackbar;
+
     private final Broker broker = new Broker();
 
-    public void initialize(final URL location, final ResourceBundle resources) {
+    @Override
+    public void initialize(final @Nonnull URL location, final @Nonnull ResourceBundle resources) {
 
         setDepth(infoCard, 1);
         setDepth(storeCard, 1);
@@ -102,6 +109,7 @@ public class BrokerController implements Initializable {
                 broker.refresh(brokerViewMBean);
 
             } catch (final RuntimeException e) {
+                snackbar.error(format("Broker refresh failed: %s", e.getMessage()));
                 LOGGER.error("error refreshing broker", e);
 
             } finally {

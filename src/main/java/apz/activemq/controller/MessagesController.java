@@ -2,6 +2,7 @@ package apz.activemq.controller;
 
 import apz.activemq.component.ConfirmJFXDialog;
 import apz.activemq.component.SelectDestinationJFXDialog;
+import apz.activemq.component.SimpleSnackbar;
 import apz.activemq.contextmenu.HideColumnContextMenu;
 import apz.activemq.contextmenu.ShowColumnContextMenu;
 import apz.activemq.converter.MessageToStringConverter;
@@ -152,6 +153,9 @@ public class MessagesController implements Initializable {
     @Inject
     private MessageToStringConverter messageToStringConverter;
 
+    @Inject
+    private SimpleSnackbar snackbar;
+
     private final ObservableList<Message> messages = observableArrayList();
     private final ObjectProperty<Queue> queue = new SimpleObjectProperty<>();
 
@@ -255,19 +259,21 @@ public class MessagesController implements Initializable {
             protected Void call() {
                 runLater(() -> progressBar.setProgress(-1.0));
 
-                final List<Message> refreshed = queue.getValue().browse();
+                try {
+                    final List<Message> refreshed = queue.getValue().browse();
 
-                runLater(() -> {
-                    messages.clear();
-                    messages.addAll(refreshed);
-                    table.setCurrentItemsCount(table.getRoot().getChildren().size());
-                    scheduledExecutorService.schedule(() -> runLater(() -> {
-                        table.sort();
-                        applyFilter().changed(search.textProperty(), search.getText(), search.getText());
-                    }), 300, MILLISECONDS);
-                });
+                    runLater(() -> {
+                        messages.clear();
+                        messages.addAll(refreshed);
+                        table.setCurrentItemsCount(table.getRoot().getChildren().size());
+                        sortAndApplyFilter();
+                    });
+                } catch (final RuntimeException e) {
+                    snackbar.error(format("Messages refresh failed: %s", e.getMessage()));
 
-                runLater(() -> progressBar.setProgress(-0.0));
+                } finally {
+                    runLater(() -> progressBar.setProgress(-0.0));
+                }
 
                 return null;
             }
@@ -331,14 +337,13 @@ public class MessagesController implements Initializable {
         final String headingMessage = format("Delete %d message%c", total, total > 1 ? 's' : '\0');
         final String bodyMessage = format("You are deleting %d message%c", total, total > 1 ? 's' : '\0');
         final Runnable deleteSelectedMessages = () -> {
-            selectedMessages.stream()
+            long deleted = selectedMessages.stream()
                     .filter(message -> queue.getValue().removeMessage(message.id.getValue()))
-                    .forEach(messages::remove);
+                    .filter(messages::remove)
+                    .count();
 
-            scheduledExecutorService.schedule(() -> runLater(() -> {
-                table.sort();
-                applyFilter().changed(search.textProperty(), search.getText(), search.getText());
-            }), 300, MILLISECONDS);
+            snackbar("deleted", deleted, total);
+            sortAndApplyFilter();
         };
 
         new ConfirmJFXDialog(root, deleteSelectedMessages, headingMessage, bodyMessage, "Delete");
@@ -353,10 +358,15 @@ public class MessagesController implements Initializable {
         final int total = selectedMessages.size();
         final String selectHeading = format("Copy %d message%c", total, total > 1 ? 's' : '\0');
         final String confirmationHeading = format("You are coping message%c to:", total > 1 ? 's' : '\0');
-        final Function<String, Runnable> copySelectedMessagesTo = destination -> () -> selectedMessages.stream()
-                .map(m -> m.id)
-                .map(StringExpression::getValue)
-                .forEach(messageId -> queue.getValue().copyMessageTo(messageId, destination));
+        final Function<String, Runnable> copySelectedMessagesTo = destination -> () -> {
+            long copied = selectedMessages.stream()
+                    .map(m -> m.id)
+                    .map(StringExpression::getValue)
+                    .filter(messageId -> queue.getValue().copyMessageTo(messageId, destination))
+                    .count();
+
+            snackbar("copied", copied, total);
+        };
         final Consumer<String> onSelected = destination -> new ConfirmJFXDialog(root, copySelectedMessagesTo.apply(destination), confirmationHeading, destination, "Copy");
         final SelectDestinationJFXDialog selectDestinationJFXDialog = new SelectDestinationJFXDialog(root, selectHeading, queue.getValue().name.getValue(), onSelected);
 
@@ -373,9 +383,15 @@ public class MessagesController implements Initializable {
         final List<Message> selectedMessages = getSelectedMessages();
         final ClipboardContent clipboardContent = new ClipboardContent();
 
-        selectedMessages.stream()
+        final Boolean copied = selectedMessages.stream()
                 .map(message -> messageToStringConverter.convert(message))
                 .collect(collectingAndThen(joining("\n"), clipboardContent::putString));
+
+        if (copied) {
+            snackbar.info("Messages have been copied");
+        } else {
+            snackbar.error("Error coping messages");
+        }
 
         table.getSelectionModel().clearSelection();
 
@@ -392,13 +408,13 @@ public class MessagesController implements Initializable {
         final String selectHeading = format("Move %d message%c", total, total > 1 ? 's' : '\0');
         final String confirmationHeading = format("You are moving message%c to:", total > 1 ? 's' : '\0');
         final Function<String, Runnable> moveSelectedMessagesTo = destination -> () -> {
-            selectedMessages.stream()
+            long moved = selectedMessages.stream()
                     .filter(message -> queue.getValue().moveMessageTo(message.id.getValue(), destination))
-                    .forEach(messages::remove);
-            scheduledExecutorService.schedule(() -> runLater(() -> {
-                table.sort();
-                applyFilter().changed(search.textProperty(), search.getText(), search.getText());
-            }), 300, MILLISECONDS);
+                    .filter(messages::remove)
+                    .count();
+
+            snackbar("moved", moved, total);
+            sortAndApplyFilter();
         };
         final Consumer<String> onSelected = destination -> new ConfirmJFXDialog(root, moveSelectedMessagesTo.apply(destination), confirmationHeading, destination, "Move");
         final SelectDestinationJFXDialog selectDestinationJFXDialog = new SelectDestinationJFXDialog(root, selectHeading, queue.getValue().name.getValue(), onSelected);
@@ -467,5 +483,24 @@ public class MessagesController implements Initializable {
         return table.getSelectionModel().getSelectedItems().stream()
                 .map(TreeItem::getValue)
                 .collect(collectingAndThen(toList(), Collections::unmodifiableList));
+    }
+
+    private void sortAndApplyFilter() {
+
+        scheduledExecutorService.schedule(() -> runLater(() -> {
+            table.sort();
+            applyFilter().changed(search.textProperty(), search.getText(), search.getText());
+        }), 300, MILLISECONDS);
+    }
+
+    private void snackbar(final String action, final long count, final int total) {
+
+        if (count == total) {
+            snackbar.info(format("All message have been %s", action));
+        } else if (count > 0) {
+            snackbar.warn(format("%d of %d have not been %s", total - count, total, action));
+        } else {
+            snackbar.error(format("No message have been %s", action));
+        }
     }
 }

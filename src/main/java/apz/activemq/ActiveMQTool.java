@@ -1,5 +1,6 @@
 package apz.activemq;
 
+import apz.activemq.component.SimpleSnackbar;
 import apz.activemq.controller.ConnectionController;
 import apz.activemq.controller.NavigationController;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -18,6 +19,7 @@ import static apz.activemq.Configuration.configureScheduledExecutorService;
 import static apz.activemq.controller.ControllerFactory.newInstance;
 import static apz.activemq.injection.Injector.clearRegistry;
 import static apz.activemq.injection.Injector.get;
+import static apz.activemq.injection.Injector.register;
 
 public class ActiveMQTool extends Application {
 
@@ -31,12 +33,14 @@ public class ActiveMQTool extends Application {
 
         final StackPane stackPane = new StackPane();
         final Scene scene = new Scene(stackPane, 800, 580);
+        final SimpleSnackbar snackbar = new SimpleSnackbar(stackPane);
 
         configureHostServices(this);
         configureJmxClient();
         configureScheduledExecutorService();
         configureObjectMapper();
         configureMessageToStringConverter(get("objectMapper", ObjectMapper.class));
+        register("snackbar", snackbar);
 
         final NavigationController navigationController = newInstance(NavigationController.class);
         final ConnectionController connectionController = newInstance(ConnectionController.class);

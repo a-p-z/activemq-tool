@@ -45,7 +45,7 @@ public class Queue extends RecursiveTreeObject<Queue> {
 
     public void refresh() {
 
-        LOGGER.info("refreshing {}", name);
+        LOGGER.info("refreshing {}", name.getValue());
 
         pending.setValue(queueView.getQueueSize());
         consumers.setValue(queueView.getConsumerCount());
@@ -57,7 +57,7 @@ public class Queue extends RecursiveTreeObject<Queue> {
 
         Optional.ofNullable(queueView).ifPresent(queue -> {
             try {
-                LOGGER.info("purging {}", name);
+                LOGGER.info("purging {}", name.getValue());
                 queue.purge();
             } catch (final Exception e) {
                 throw new RuntimeException(e.getMessage(), e.getCause());
@@ -69,7 +69,7 @@ public class Queue extends RecursiveTreeObject<Queue> {
 
         return Optional.ofNullable(queueView).map(queue -> {
             try {
-                LOGGER.info("browsing {}", name);
+                LOGGER.info("browsing {}", name.getValue());
                 return stream(queueView.browse())
                         .map(Message::new)
                         .collect(collectingAndThen(toList(), Collections::unmodifiableList));
@@ -81,7 +81,7 @@ public class Queue extends RecursiveTreeObject<Queue> {
 
     public int getMaxPageSize() {
 
-        LOGGER.info("getting max page size of {}", name);
+        LOGGER.info("getting max page size of {}", name.getValue());
 
         return Optional.ofNullable(queueView)
                 .map(DestinationViewMBean::getMaxPageSize)
@@ -92,7 +92,7 @@ public class Queue extends RecursiveTreeObject<Queue> {
 
         requireNonNull(messageId, "messageId must be not null");
 
-        LOGGER.info("removing message {} in {}", messageId, name);
+        LOGGER.info("removing message {} in {}", messageId, name.getValue());
 
         boolean result;
 
@@ -100,12 +100,12 @@ public class Queue extends RecursiveTreeObject<Queue> {
             result = queueView.removeMessage(messageId);
 
         } catch (final Exception e) {
-            LOGGER.error("error removing message " + messageId + " in " + name + ": " + e.getMessage(), e);
+            LOGGER.error("error removing message " + messageId + " in " + name.getValue() + ": " + e.getMessage(), e);
             return false;
         }
 
         if (!result) {
-            LOGGER.error("error removing message " + messageId + " in " + name);
+            LOGGER.error("error removing message " + messageId + " in " + name.getValue());
         }
 
         return result;
@@ -116,7 +116,7 @@ public class Queue extends RecursiveTreeObject<Queue> {
         requireNonNull(messageId, "messageId must be not null");
         requireNonNull(destination, "destination must be not null");
 
-        LOGGER.info("coping message {} from {} to {}", messageId, name, destination);
+        LOGGER.info("coping message {} from {} to {}", messageId, name.getValue(), destination);
 
         boolean result;
 
@@ -124,12 +124,12 @@ public class Queue extends RecursiveTreeObject<Queue> {
             result = queueView.copyMessageTo(messageId, destination);
 
         } catch (final Exception e) {
-            LOGGER.error("error coping message " + messageId + " from " + name + " to " + destination + ": " + e.getMessage(), e);
+            LOGGER.error("error coping message " + messageId + " from " + name.getValue() + " to " + destination + ": " + e.getMessage(), e);
             return false;
         }
 
         if (!result) {
-            LOGGER.error("error coping message " + messageId + " from " + name + " to " + destination);
+            LOGGER.error("error coping message " + messageId + " from " + name.getValue()+ " to " + destination);
         }
 
         return result;
@@ -140,7 +140,7 @@ public class Queue extends RecursiveTreeObject<Queue> {
         requireNonNull(messageId, "messageId must be not null");
         requireNonNull(destination, "destination must be not null");
 
-        LOGGER.info("moving message {} from {} to {}", messageId, name, destination);
+        LOGGER.info("moving message {} from {} to {}", messageId, name.getValue(), destination);
 
         boolean result;
 
@@ -148,12 +148,12 @@ public class Queue extends RecursiveTreeObject<Queue> {
             result = queueView.moveMessageTo(messageId, destination);
 
         } catch (final Exception e) {
-            LOGGER.error("error moving message " + messageId + " from " + name + " to " + destination + ": " + e.getMessage(), e);
+            LOGGER.error("error moving message " + messageId + " from " + name.getValue() + " to " + destination + ": " + e.getMessage(), e);
             return false;
         }
 
         if (!result) {
-            LOGGER.error("error moving message " + messageId + " from " + name + " to " + destination);
+            LOGGER.error("error moving message " + messageId + " from " + name.getValue() + " to " + destination);
         }
 
         return result;

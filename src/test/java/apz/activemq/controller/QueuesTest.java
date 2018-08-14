@@ -1,5 +1,6 @@
 package apz.activemq.controller;
 
+import apz.activemq.component.SimpleSnackbar;
 import apz.activemq.jmx.JmxClient;
 import apz.activemq.model.Queue;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -32,6 +33,7 @@ import static apz.activemq.Configuration.configureObjectMapper;
 import static apz.activemq.Configuration.configureScheduledExecutorService;
 import static apz.activemq.controller.ControllerFactory.newInstance;
 import static apz.activemq.injection.Injector.clearRegistry;
+import static apz.activemq.injection.Injector.get;
 import static apz.activemq.injection.Injector.register;
 import static apz.activemq.utils.AssertUtils.assertThat;
 import static apz.activemq.utils.AssertUtils.assumeThat;
@@ -49,7 +51,10 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.startsWith;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.atMost;
 import static org.mockito.BDDMockito.given;
@@ -75,10 +80,11 @@ public class QueuesTest extends ApplicationTest {
         final Scene scene = new Scene(stackPane, 800, 580);
 
         clearRegistry();
-        final ObjectMapper objectMapper = configureObjectMapper();
+        configureObjectMapper();
         register("jmxClient", jmxClient);
+        register("snackbar", snackbar);
         configureScheduledExecutorService();
-        configureMessageToStringConverter(objectMapper);
+        configureMessageToStringConverter(get("objectMapper", ObjectMapper.class));
 
         queuesController = newInstance(QueuesController.class);
 
@@ -101,8 +107,9 @@ public class QueuesTest extends ApplicationTest {
         clickOn("#refresh");
 
         // then
-        verify(jmxClient).getQueues();
-        verifyNoMoreInteractions(jmxClient);
+        then(jmxClient).should().getQueues();
+        then(jmxClient).shouldHaveNoMoreInteractions();
+        then(snackbar).shouldHaveZeroInteractions();
         assertThat("table should have 50 rows", table.getRoot()::getChildren, hasSize(50));
         assertThat("footer should be 'Showing 50 of 50 queues'", footer::getText, is("Showing 50 of 50 queues"));
         assertThat("the first row should be 'queue.test.alabama'", table.getRoot().getChildren().get(0).getValue().name::getValue, is("queue.test.alabama"));
@@ -126,8 +133,9 @@ public class QueuesTest extends ApplicationTest {
         clickOn("#refresh");
 
         // then
-        verify(jmxClient, times(2)).getQueues();
-        verifyNoMoreInteractions(jmxClient);
+        then(jmxClient).should(times(2)).getQueues();
+        then(jmxClient).shouldHaveNoMoreInteractions();
+        then(snackbar).shouldHaveZeroInteractions();
         assertThat("table should have 49 rows", table.getRoot()::getChildren, hasSize(49));
         assertThat("footer should be 'Showing 49 of 50 queues'", footer::getText, is("Showing 49 of 50 queues"));
         assertThat("the first row should be 'queue.test.alaska'", table.getRoot().getChildren().get(0).getValue().name::getValue, is("queue.test.alaska"));
@@ -150,8 +158,9 @@ public class QueuesTest extends ApplicationTest {
         clickOn("#refresh");
 
         // then
-        verify(jmxClient, times(2)).getQueues();
-        verifyNoMoreInteractions(jmxClient);
+        then(jmxClient).should(times(2)).getQueues();
+        then(jmxClient).shouldHaveNoMoreInteractions();
+        then(snackbar).shouldHaveZeroInteractions();
         assertThat("table should have 50 rows", table.getRoot()::getChildren, hasSize(50));
         assertThat("footer should be 'Showing 50 of 50 queues'", footer::getText, is("Showing 50 of 50 queues"));
         assertThat("last row should be 'queue.test.alabama'", table.getRoot().getChildren().get(49).getValue().name::getValue, is("queue.test.alabama"));
@@ -175,8 +184,9 @@ public class QueuesTest extends ApplicationTest {
 
         // then
         final Function<Integer, String> queue = i -> table.getRoot().getChildren().get(i).getValue().name.getValue();
-        verify(jmxClient, times(2)).getQueues();
-        verifyNoMoreInteractions(jmxClient);
+        then(jmxClient).should(times(2)).getQueues();
+        then(jmxClient).shouldHaveNoMoreInteractions();
+        then(snackbar).shouldHaveZeroInteractions();
         assertThat("footer should be 'Showing 50 of 50 queues'", footer::getText, is("Showing 50 of 50 queues"));
         assertThat("table should have 50 rows", table.getRoot()::getChildren, hasSize(50));
         IntStream.range(0, 49).boxed().forEach(i -> {
@@ -201,8 +211,9 @@ public class QueuesTest extends ApplicationTest {
                 .write("alaska");
 
         // then
-        verify(jmxClient).getQueues();
-        verifyNoMoreInteractions(jmxClient);
+        then(jmxClient).should().getQueues();
+        then(jmxClient).shouldHaveNoMoreInteractions();
+        then(snackbar).shouldHaveZeroInteractions();
         assertThat("table should have 1 row", table.getRoot()::getChildren, hasSize(1));
         assertThat("footer should be 'Showing 1 of 50 queues'", footer::getText, is("Showing 1 of 50 queues"));
         assertThat("the first row should be 'queue.test.alaska'", table.getRoot().getChildren().get(0).getValue().name::getValue, is("queue.test.alaska"));
@@ -222,8 +233,9 @@ public class QueuesTest extends ApplicationTest {
                 .write("al");
 
         // then
-        verify(jmxClient).getQueues();
-        verifyNoMoreInteractions(jmxClient);
+        then(jmxClient).should().getQueues();
+        then(jmxClient).shouldHaveNoMoreInteractions();
+        then(snackbar).shouldHaveZeroInteractions();
         assertThat("table should have 3 row", table.getRoot()::getChildren, hasSize(3));
         assertThat("footer should be 'Showing 3 of 50 queues'", footer::getText, is("Showing 3 of 50 queues"));
         assertThat("the first row should be 'queue.test.alabama'", table.getRoot().getChildren().get(0).getValue().name::getValue, is("queue.test.alabama"));
@@ -252,8 +264,9 @@ public class QueuesTest extends ApplicationTest {
 
         // then
         final Function<Integer, Queue> queue = i -> table.getRoot().getChildren().get(i).getValue();
-        verify(jmxClient, times(2)).getQueues();
-        verifyNoMoreInteractions(jmxClient);
+        then(jmxClient).should(times(2)).getQueues();
+        then(jmxClient).shouldHaveNoMoreInteractions();
+        then(snackbar).shouldHaveZeroInteractions();
         assertThat("table should have 4 row", table.getRoot()::getChildren, hasSize(4));
         assertThat("footer should be 'Showing 4 of 50 queues'", footer::getText, is("Showing 4 of 50 queues"));
         assertThat("the first row should contain 'test.a'", table.getRoot().getChildren().get(0).getValue().name::getValue, containsString("test.a"));
@@ -280,21 +293,24 @@ public class QueuesTest extends ApplicationTest {
         clickOn("#confirm");
 
         // then
-        verify(jmxClient).getQueues();
-        verifyNoMoreInteractions(jmxClient);
-        queueViewMBeans.forEach(queueViewMBean -> verify(queueViewMBean, atLeast(1)).getQueueSize());
-        queueViewMBeans.forEach(queueViewMBean -> verify(queueViewMBean, atLeast(1)).getConsumerCount());
-        queueViewMBeans.forEach(queueViewMBean -> verify(queueViewMBean, atLeast(1)).getEnqueueCount());
-        queueViewMBeans.forEach(queueViewMBean -> verify(queueViewMBean, atLeast(1)).getDequeueCount());
-        queueViewMBeans.forEach(queueViewMBean -> verify(queueViewMBean, atLeast(1)).getName());
+        then(jmxClient).should().getQueues();
+        then(jmxClient).shouldHaveNoMoreInteractions();
+        then(snackbar).should().info(any());
+        then(snackbar).shouldHaveNoMoreInteractions();
+        queueViewMBeans.forEach(queueViewMBean -> then(queueViewMBean).should(atLeast(1)).getQueueSize());
+        queueViewMBeans.forEach(queueViewMBean -> then(queueViewMBean).should(atLeast(1)).getConsumerCount());
+        queueViewMBeans.forEach(queueViewMBean -> then(queueViewMBean).should(atLeast(1)).getEnqueueCount());
+        queueViewMBeans.forEach(queueViewMBean -> then(queueViewMBean).should(atLeast(1)).getDequeueCount());
+        queueViewMBeans.forEach(queueViewMBean -> then(queueViewMBean).should(atLeast(1)).getName());
         queueViewMBeans.forEach(queueViewMBean -> {
             try {
-                verify(queueViewMBean, atMost(1)).purge();
+                then(queueViewMBean).should(atMost(1)).purge();
             } catch (final Exception e) {
                 throw new RuntimeException(e.getMessage(), e.getCause());
             }
         });
-        queueViewMBeans.forEach(Mockito::verifyNoMoreInteractions);
+        queueViewMBeans.forEach(Mockito::
+                verifyNoMoreInteractions);
     }
 
     @Test
@@ -313,11 +329,13 @@ public class QueuesTest extends ApplicationTest {
         clickOn("#confirm");
 
         // then
-        verify(jmxClient).getQueues();
-        verify(jmxClient).getBroker();
-        verifyNoMoreInteractions(jmxClient);
-        verify(brokerViewMBean).removeQueue(anyString());
-        verifyNoMoreInteractions(brokerViewMBean);
+        then(jmxClient).should().getQueues();
+        then(jmxClient).should().getBroker();
+        then(jmxClient).shouldHaveNoMoreInteractions();
+        then(brokerViewMBean).should().removeQueue(anyString());
+        then(brokerViewMBean).shouldHaveNoMoreInteractions();
+        then(snackbar).should().info(any());
+        then(snackbar).shouldHaveNoMoreInteractions();
     }
 
     @Test
@@ -333,8 +351,9 @@ public class QueuesTest extends ApplicationTest {
                 .clickOn("#browse");
 
         // then
-        verify(jmxClient).getQueues();
-        verifyNoMoreInteractions(jmxClient);
+        then(jmxClient).should().getQueues();
+        then(jmxClient).shouldHaveNoMoreInteractions();
+        then(snackbar).shouldHaveZeroInteractions();
         assertThat("titles should not be null", lookup("#title")::queryAll, notNullValue());
         assertThat("titles should contain QUEUES ad MESSAGES",
                 () -> lookup("#title").queryAllAs(Label.class).stream().map(Labeled::getText).collect(toList()),
@@ -353,8 +372,9 @@ public class QueuesTest extends ApplicationTest {
         doubleClickOn(table.getChildrenUnmodifiable().get(1));
 
         // then
-        verify(jmxClient).getQueues();
-        verifyNoMoreInteractions(jmxClient);
+        then(jmxClient).should().getQueues();
+        then(jmxClient).shouldHaveNoMoreInteractions();
+        then(snackbar).shouldHaveZeroInteractions();
         assertThat("titles should not be null", lookup("#title")::queryAll, notNullValue());
         assertThat("titles should contain QUEUES ad MESSAGES",
                 () -> lookup("#title").queryAllAs(Label.class).stream().map(Labeled::getText).collect(toList()),
@@ -366,7 +386,7 @@ public class QueuesTest extends ApplicationTest {
         // given
         final JFXTreeTableView<Queue> table = lookup("#table").query();
         final List<QueueViewMBean> queueViewMBeans = spyQueueViewMBean(50L, 0L, 100L);
-        when(jmxClient.getQueues()).thenReturn(queueViewMBeans);
+        given(jmxClient.getQueues()).willReturn(queueViewMBeans);
         initializeTable(table);
 
         // when
@@ -375,8 +395,10 @@ public class QueuesTest extends ApplicationTest {
 
         // then
         final AtomicReference<String> content = new AtomicReference<>();
-        verify(jmxClient).getQueues();
-        verifyNoMoreInteractions(jmxClient);
+        then(jmxClient).should().getQueues();
+        then(jmxClient).shouldHaveNoMoreInteractions();
+        then(snackbar).should().info(any());
+        then(snackbar).shouldHaveNoMoreInteractions();
         runLater(() -> content.set(Clipboard.getSystemClipboard().getContent(PLAIN_TEXT).toString()));
         assertThat("clipboard should contain the queue", content::get, startsWith("Queue{name=queue.test."));
     }

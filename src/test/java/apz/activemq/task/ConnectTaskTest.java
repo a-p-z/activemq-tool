@@ -1,5 +1,6 @@
 package apz.activemq.task;
 
+import apz.activemq.component.SimpleSnackbar;
 import apz.activemq.controller.ConnectionController;
 import apz.activemq.jmx.JmxClient;
 import apz.activemq.jmx.exception.JmxConnectionException;
@@ -14,7 +15,6 @@ import org.testfx.framework.junit.ApplicationTest;
 import java.io.IOException;
 
 import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
@@ -28,6 +28,9 @@ public class ConnectTaskTest extends ApplicationTest {
 
     @Mock
     private JmxClient jmxClient;
+
+    @Mock
+    private SimpleSnackbar snackbar;
 
     @InjectMocks
     private ConnectTask connectTask;
@@ -52,6 +55,8 @@ public class ConnectTaskTest extends ApplicationTest {
         verifyNoMoreInteractions(connectionController);
         verify(jmxClient).connect("activemq.test.com", 1099);
         verifyNoMoreInteractions(jmxClient);
+        verify(snackbar).info(anyString());
+        verifyNoMoreInteractions(snackbar);
     }
 
     @Test
@@ -74,5 +79,7 @@ public class ConnectTaskTest extends ApplicationTest {
         verifyNoMoreInteractions(connectionController);
         verify(jmxClient).connect("activemq.test.com", 1099);
         verifyNoMoreInteractions(jmxClient);
+        verify(snackbar).error(anyString());
+        verifyNoMoreInteractions(snackbar);
     }
 }

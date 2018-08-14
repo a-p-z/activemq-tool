@@ -1,5 +1,6 @@
 package apz.activemq.controller;
 
+import apz.activemq.component.SimpleSnackbar;
 import apz.activemq.injection.Inject;
 import apz.activemq.jmx.JmxClient;
 import apz.activemq.listeners.PortValidatorInputListener;
@@ -49,6 +50,9 @@ public class ConnectionController implements Initializable {
     @Inject
     private ScheduledExecutorService scheduledExecutorService;
 
+    @Inject
+    private SimpleSnackbar snackbar;
+
     @FXML
     private JFXProgressBar progressBar;
 
@@ -87,7 +91,7 @@ public class ConnectionController implements Initializable {
     @FXML
     private void connect() {
         if (host.validate()) {
-            scheduledExecutorService.submit(new ConnectTask(this, jmxClient));
+            scheduledExecutorService.submit(new ConnectTask(this, snackbar, jmxClient));
         }
     }
 

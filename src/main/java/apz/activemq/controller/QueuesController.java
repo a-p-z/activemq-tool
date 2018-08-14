@@ -1,6 +1,7 @@
 package apz.activemq.controller;
 
 import apz.activemq.component.ConfirmJFXDialog;
+import apz.activemq.component.SimpleSnackbar;
 import apz.activemq.injection.Inject;
 import apz.activemq.jmx.JmxClient;
 import apz.activemq.listeners.QueuesTableSkinListener;
@@ -86,6 +87,9 @@ public class QueuesController implements Initializable {
 
     @Inject
     private ScheduledExecutorService scheduledExecutorService;
+
+    @Inject
+    private SimpleSnackbar snackbar;
 
     private final ObservableList<Queue> queues = observableArrayList();
 
@@ -221,8 +225,10 @@ public class QueuesController implements Initializable {
         final Runnable purgeSelectedQueue = () -> {
             try {
                 selectedQueue.purge();
+                snackbar.info(format("%s has been purged", selectedQueue.name.getValue()));
 
             } catch (final RuntimeException e) {
+                snackbar.error(format("Error purging %s", selectedQueue.name.getValue()));
                 throw e;
 
             } finally {
@@ -248,9 +254,11 @@ public class QueuesController implements Initializable {
             try {
                 jmxClient.getBroker().removeQueue(selectedQueue.name.getValue());
                 queues.remove(selectedQueue);
+                snackbar.info(format("%s has been deleted", selectedQueue.name.getValue()));
 
             } catch (final Exception e) {
-                // do nothing
+                snackbar.error(format("Error deleting %s", selectedQueue.name.getValue()));
+                throw new RuntimeException(e.getMessage(), e.getCause());
             }
         };
 
@@ -312,7 +320,7 @@ public class QueuesController implements Initializable {
     /**
      * show dialog for copy selected messages
      */
-    public void copySelectedQueueToClipboard() {
+    private void copySelectedQueueToClipboard() {
 
         final Queue selectedQueue = getSelectedQueue();
         final ClipboardContent clipboardContent = new ClipboardContent();
@@ -322,5 +330,7 @@ public class QueuesController implements Initializable {
         table.getSelectionModel().clearSelection();
 
         Clipboard.getSystemClipboard().setContent(clipboardContent);
+
+        snackbar.info(format("%s has been copied", selectedQueue.name.getValue()));
     }
 }

@@ -1,0 +1,15 @@
+.jfx-snackbar-toast {
+    -fx-text-fill: WHITE
+}
+
+.jfx-snackbar-content:info-toast {
+    -fx-background-color: #78932c;
+}
+
+.jfx-snackbar-content:warning-toast {
+    -fx-background-color: #f1e700;
+}
+
+.jfx-snackbar-content:error-toast {
+    -fx-background-color: #cf242a;
+}

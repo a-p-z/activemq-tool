@@ -1,5 +1,6 @@
 package apz.activemq.controller;
 
+import apz.activemq.component.SimpleSnackbar;
 import apz.activemq.jmx.JmxClient;
 import com.sun.javafx.application.HostServicesDelegate;
 import javafx.scene.Scene;
@@ -37,6 +38,9 @@ public class NavigationTest extends ApplicationTest {
     @Mock
     private ScheduledExecutorService scheduledExecutorService;
 
+    @Mock
+    private SimpleSnackbar snackbar;
+
     @Override
     public void start(final Stage stage) {
 
@@ -47,6 +51,7 @@ public class NavigationTest extends ApplicationTest {
         register("hostServices", hostServices);
         register("jmxClient", jmxClient);
         register("scheduledExecutorService", scheduledExecutorService);
+        register("snackbar", snackbar);
 
         final NavigationController navigationController = newInstance(NavigationController.class);
 
@@ -67,6 +72,7 @@ public class NavigationTest extends ApplicationTest {
         then(hostServices).shouldHaveZeroInteractions();
         then(jmxClient).shouldHaveZeroInteractions();
         then(scheduledExecutorService).shouldHaveZeroInteractions();
+        then(snackbar).shouldHaveZeroInteractions();
         assertThat("title should be INFO", title::getText, is("INFO"));
     }
 
@@ -85,6 +91,7 @@ public class NavigationTest extends ApplicationTest {
         then(jmxClient).should().getBroker();
         then(jmxClient).shouldHaveNoMoreInteractions();
         then(scheduledExecutorService).shouldHaveZeroInteractions();
+        then(snackbar).shouldHaveZeroInteractions();
         assertThat("title should be BROKER", title::getText, is("BROKER"));
     }
 
@@ -99,6 +106,7 @@ public class NavigationTest extends ApplicationTest {
         then(jmxClient).shouldHaveZeroInteractions();
         then(scheduledExecutorService).should().submit(any(Runnable.class));
         then(scheduledExecutorService).shouldHaveNoMoreInteractions();
+        then(snackbar).shouldHaveZeroInteractions();
         assertThat("title should be QUEUES", title::getText, is("QUEUES"));
     }
 }

@@ -1,5 +1,6 @@
 package apz.activemq.controller;
 
+import apz.activemq.component.SimpleSnackbar;
 import apz.activemq.jmx.JmxClient;
 import com.jfoenix.controls.JFXSpinner;
 import javafx.scene.Scene;
@@ -20,6 +21,7 @@ import static apz.activemq.utils.AssertUtils.assertThat;
 import static apz.activemq.utils.MockUtils.spyBrokerViewMBean;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 
@@ -29,6 +31,9 @@ public class BrokerTest extends ApplicationTest {
     @Mock
     private JmxClient jmxClient;
 
+    @Mock
+    private SimpleSnackbar snackbar;
+
     @Override
     public void start(final Stage stage) {
 
@@ -37,6 +42,7 @@ public class BrokerTest extends ApplicationTest {
 
         clearRegistry();
         register("jmxClient", jmxClient);
+        register("snackbar", snackbar);
 
         final BrokerController brokerController = newInstance(BrokerController.class);
 
@@ -66,6 +72,7 @@ public class BrokerTest extends ApplicationTest {
         final JFXSpinner temp = lookup("#temp").query();
         then(jmxClient).should().getBroker();
         then(jmxClient).shouldHaveNoMoreInteractions();
+        then(snackbar).shouldHaveZeroInteractions();
         assertThat("id should be 'ID:activemq.test.com-64874-2439984034094-1:1'", id::getText, is("ID:activemq.test.com-64874-2439984034094-1:1"));
         assertThat("name should be 'localhost'", name::getText, is("localhost"));
         assertThat("version should be '5.14.5'", version::getText, is("5.14.5"));
@@ -94,6 +101,8 @@ public class BrokerTest extends ApplicationTest {
         final JFXSpinner temp = lookup("#temp").query();
         then(jmxClient).should().getBroker();
         then(jmxClient).shouldHaveNoMoreInteractions();
+        then(snackbar).should().error(any());
+        then(snackbar).shouldHaveNoMoreInteractions();
         assertThat("id should be null", id::getText, nullValue());
         assertThat("name should be null", name::getText, nullValue());
         assertThat("version should be null", version::getText, nullValue());

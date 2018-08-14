@@ -17,9 +17,7 @@ import static apz.activemq.injection.Injector.clearRegistry;
 import static apz.activemq.injection.Injector.register;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertThat;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.BDDMockito.then;
 
 @RunWith(MockitoJUnitRunner.class)
 public class InfoTest extends ApplicationTest {
@@ -49,7 +47,7 @@ public class InfoTest extends ApplicationTest {
         // then
         final Label developer = lookup("#developer").query();
         final Hyperlink repository = lookup("#repository").query();
-        verifyZeroInteractions(hostServices);
+        then(hostServices).shouldHaveZeroInteractions();
         assertThat("developer should be present", developer, notNullValue());
         assertThat("repository should be present", repository, notNullValue());
     }
@@ -60,7 +58,7 @@ public class InfoTest extends ApplicationTest {
         clickOn("#repository");
 
         // then
-        verify(hostServices).showDocument("https://github.com/a-p-z/activemq-tool");
-        verifyNoMoreInteractions(hostServices);
+        then(hostServices).should().showDocument("https://github.com/a-p-z/activemq-tool");
+        then(hostServices).shouldHaveNoMoreInteractions();
     }
 }
