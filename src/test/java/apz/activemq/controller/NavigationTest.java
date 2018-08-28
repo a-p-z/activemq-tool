@@ -26,7 +26,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 
-@RunWith(MockitoJUnitRunner.class)
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class NavigationTest extends ApplicationTest {
 
     @Mock
@@ -108,5 +108,19 @@ public class NavigationTest extends ApplicationTest {
         then(scheduledExecutorService).shouldHaveNoMoreInteractions();
         then(snackbar).shouldHaveZeroInteractions();
         assertThat("title should be QUEUES", title::getText, is("QUEUES"));
+    }
+
+    @Test
+    public void whenClickOnProcessesTitleShouldBeProcesses() {
+        // when
+        clickOn("#processes");
+
+        // then
+        final Label title = lookup("#title").query();
+        then(hostServices).shouldHaveZeroInteractions();
+        then(jmxClient).shouldHaveZeroInteractions();
+        then(scheduledExecutorService).shouldHaveZeroInteractions();
+        then(snackbar).shouldHaveZeroInteractions();
+        assertThat("title should be PROCESSES", title::getText, is("PROCESSES"));
     }
 }

@@ -79,7 +79,7 @@ public class SelectDestinationJFXDialogTest extends ApplicationTest {
     }
 
     @Test
-    public void whenSelectAWithoutADestinationErrorShouldBeShown() {
+    public void whenSelectWithoutADestinationErrorShouldBeShown() {
         // when
         clickOn("#select");
 
@@ -90,7 +90,7 @@ public class SelectDestinationJFXDialogTest extends ApplicationTest {
                 .map(ValidatorBase::getMessage)
                 .collect(joining(", "));
         verifyZeroInteractions(action);
-        assertThat("error message should be 'destination si required'", errors, is("destination si required"));
+        assertThat("error message should be 'destination is required'", errors, is("destination is required"));
     }
 
     @Test

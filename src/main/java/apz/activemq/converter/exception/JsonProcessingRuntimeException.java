@@ -1,4 +1,4 @@
-package apz.activemq.controller.exception;
+package apz.activemq.converter.exception;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 

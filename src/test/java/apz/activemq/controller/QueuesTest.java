@@ -57,10 +57,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.atMost;
-import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 @RunWith(MockitoJUnitRunner.Silent.class)
 public class QueuesTest extends ApplicationTest {

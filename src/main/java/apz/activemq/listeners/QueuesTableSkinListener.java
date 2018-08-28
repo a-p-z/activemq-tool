@@ -11,16 +11,18 @@ import javafx.scene.control.Skin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
+
 public class QueuesTableSkinListener implements ChangeListener<Skin<?>> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(QueuesTableSkinListener.class);
 
-    private final double value;
     private final JFXTreeTableView<Queue> table;
+    private final double value;
 
-    public QueuesTableSkinListener(final JFXTreeTableView<Queue> table, final double value) {
-        this.value = value;
+    public QueuesTableSkinListener(final @Nonnull JFXTreeTableView<Queue> table, final double value) {
         this.table = table;
+        this.value = value;
     }
 
     @Override

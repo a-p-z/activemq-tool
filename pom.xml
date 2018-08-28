@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>apz.activemq</groupId>
@@ -9,6 +10,7 @@
     <properties>
         <maven.test.skip>true</maven.test.skip>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <camel.version>2.22.1</camel.version>
     </properties>
 
     <build>
@@ -72,6 +74,26 @@
             <artifactId>commons-text</artifactId>
             <version>1.2</version>
         </dependency>
+        <dependency>
+            <groupId>org.apache.camel</groupId>
+            <artifactId>camel-core</artifactId>
+            <version>${camel.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.camel</groupId>
+            <artifactId>camel-jms</artifactId>
+            <version>${camel.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.camel</groupId>
+            <artifactId>camel-stream</artifactId>
+            <version>${camel.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.code.findbugs</groupId>
+            <artifactId>jsr305</artifactId>
+            <version>3.0.2</version>
+        </dependency>
 
         <dependency>
             <groupId>junit</groupId>
@@ -95,6 +117,12 @@
             <groupId>org.testfx</groupId>
             <artifactId>testfx-junit</artifactId>
             <version>4.0.12-alpha</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.camel</groupId>
+            <artifactId>camel-test</artifactId>
+            <version>${camel.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

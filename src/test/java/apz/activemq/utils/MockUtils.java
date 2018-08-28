@@ -18,12 +18,20 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
+import static java.lang.String.format;
 import static java.util.Arrays.asList;
+import static java.util.Arrays.fill;
 import static java.util.Collections.unmodifiableList;
-import static java.util.stream.Collectors.collectingAndwillAnswer;
+import static java.util.UUID.randomUUID;
+import static java.util.stream.Collectors.collectingAndThen;
 import static java.util.stream.Collectors.toList;
+import static org.apache.activemq.broker.jmx.CompositeDataConstants.BODY_LENGTH;
+import static org.apache.activemq.broker.jmx.CompositeDataConstants.JMSXGROUP_SEQ;
+import static org.apache.activemq.broker.jmx.CompositeDataConstants.MESSAGE_TEXT;
+import static org.apache.activemq.broker.jmx.CompositeDataConstants.STRING_PROPERTIES;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.when;
 
 public class MockUtils {
 
@@ -64,6 +72,7 @@ public class MockUtils {
         given(brokerViewMBean.getStorePercentUsage()).willReturn(storePercentUsage);
         given(brokerViewMBean.getMemoryPercentUsage()).willReturn(memoryPercentUsage);
         given(brokerViewMBean.getTempPercentUsage()).willReturn(tempPercentUsage);
+        given(brokerViewMBean.getTransportConnectorByType("tcp")).willReturn("activemq.test.com");
 
         return brokerViewMBean;
     }
@@ -82,7 +91,7 @@ public class MockUtils {
                     given(queue.getEnqueueCount()).willAnswer(invocation -> ThreadLocalRandom.current().nextLong(0, 100));
                     given(queue.getDequeueCount()).willAnswer(invocation -> ThreadLocalRandom.current().nextLong(0, 100));
                     given(queue.getMaxPageSize()).willReturn(400);
-                   
+
                     try {
                         given(queue.browse()).willAnswer(invocation -> spyCompositeDataMessages(queueSize));
                     } catch (final OpenDataException e) {
@@ -90,10 +99,9 @@ public class MockUtils {
                     }
                     return queue;
                 })
-                .collect(collectingAndwillAnswer(toList(), Collections::unmodifiableList));
+                .collect(collectingAndThen(toList(), Collections::unmodifiableList));
     }
 
-    @SuppressWarnings("unchecked")
     public static CompositeData[] spyCompositeDataMessages(final Long num) {
 
         final CompositeData[] cdataMessages = new CompositeData[num.intValue()];
@@ -118,7 +126,7 @@ public class MockUtils {
         given(message.get("JMSActiveMQBrokerInTime")).willReturn(0L);
         given(message.get("JMSActiveMQBrokerOutTime")).willReturn(0L);
         given(message.get(STRING_PROPERTIES)).willReturn(tabularData);
-
+        //noinspection unchecked
         given(tabularData.values()).willReturn(values);
         given(jobId.get("key")).willReturn("jobId");
         given(jobId.get("value")).willAnswer(ANSWER_WITH_A_RANDOM_JOB_ID);

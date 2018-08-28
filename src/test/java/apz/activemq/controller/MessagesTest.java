@@ -47,8 +47,6 @@ import static javafx.scene.input.KeyCode.C;
 import static javafx.scene.input.KeyCode.CONTROL;
 import static javafx.scene.input.KeyCode.DOWN;
 import static javafx.scene.input.KeyCode.SHIFT;
-import static javafx.scene.input.MouseButton.PRIMARY;
-import static javafx.scene.input.MouseButton.SECONDARY;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
@@ -279,7 +277,8 @@ public class MessagesTest extends ApplicationTest {
         then(snackbar).shouldHaveZeroInteractions();
         assertThat("table current items count should be less then 42", table::getCurrentItemsCount, lessThan(42));
         assertThat("footer should be 'Showing " + table.getCurrentItemsCount() + " of 42 (messages are limited by browser page size 400)'", footer::getText, is("Showing " + table.getCurrentItemsCount() + " of 42 (messages are limited by browser page size 400)"));
-        IntStream.range(0, table.getCurrentItemsCount()).boxed().forEach(i -> {
+        final int currentIntemCount = table.getCurrentItemsCount();
+        IntStream.range(0, currentIntemCount).boxed().forEach(i -> {
             final String messageId = table.getRoot().getChildren().get(i).getValue().id.getValue();
             final Supplier<String> mode = () -> table.getRoot().getChildren().get(i).getValue().mode.getValue();
             assertThat("mode of message '" + messageId + "' should 'NON-PERSISTENT'", mode, is("NON-PERSISTENT"));
@@ -378,7 +377,7 @@ public class MessagesTest extends ApplicationTest {
         scrollToLastColumn(table);
         rightClickOn("#add.column-header")
                 .moveBy(10, 260)
-                .press(PRIMARY).release(PRIMARY);
+                .clickOn();
 
         // then
         final Supplier<List<TreeTableColumn<Message, ?>>> visibleColumns2 = () -> table.getColumns().stream()
@@ -404,10 +403,10 @@ public class MessagesTest extends ApplicationTest {
                 .count();
 
         // when
-        scrollToLastColumn(table);
+        retry(() -> scrollToLastColumn(table));
         rightClickOn("#add.column-header")
                 .moveBy(10, 100)
-                .press(PRIMARY).release(PRIMARY);
+                .clickOn();
 
         // then
         final Supplier<List<TreeTableColumn<Message, ?>>> visibleColumns2 = () -> table.getColumns().stream()
@@ -458,7 +457,7 @@ public class MessagesTest extends ApplicationTest {
         scrollToLastColumn(table);
         rightClickOn("#add.column-header")
                 .moveBy(10, 100)
-                .press(PRIMARY).release(PRIMARY);
+                .clickOn();
         clickOn("#search")
                 .write(body);
 
@@ -487,7 +486,7 @@ public class MessagesTest extends ApplicationTest {
         scrollToLastColumn(table);
         rightClickOn("#add.column-header")
                 .moveBy(10, 340)
-                .press(PRIMARY).release(PRIMARY);
+                .clickOn();
 
         // then
         final Supplier<List<TreeTableColumn<Message, ?>>> visibleColumns2 = () -> table.getColumns().stream()
@@ -515,7 +514,7 @@ public class MessagesTest extends ApplicationTest {
         scrollToLastColumn(table);
         rightClickOn("#add.column-header")
                 .moveBy(10, 340)
-                .press(PRIMARY).release(PRIMARY);
+                .clickOn();
         clickOn("#search")
                 .write(jobId);
 
@@ -560,31 +559,35 @@ public class MessagesTest extends ApplicationTest {
         final JFXTreeTableView<Message> table = lookup("#table").query();
         final Label footer = lookup("#footer").query();
         initializeTable(table);
-        given(queueViewBean.removeMessage(anyString()))
-                .willReturn(true)
-                .willReturn(false)
-                .willReturn(true);
+        given(queueViewBean.removeMessage(anyString())).willReturn(true, false, true);
 
         // when
-        clickOn(table.getChildrenUnmodifiable().get(1))
+        clickOn(table)
                 .press(SHIFT)
-                .push(DOWN)
-                .push(DOWN)
-                .release(SHIFT)
-                .press(SECONDARY)
-                .release(SECONDARY)
+                .moveBy(0, 90)
+                .clickOn()
+                .release(SHIFT);
+
+        rightClickOn()
                 .clickOn("#delete");
-        retry(() -> clickOn("#confirm"));
+
+        clickOn("#confirm");
 
         // then
-        then(queueViewBean).should().getName();
-        then(queueViewBean).should().browse();
-        then(queueViewBean).should(atLeast(1)).getMaxPageSize();
-        then(queueViewBean).should(times(3)).removeMessage(anyString());
-        then(queueViewBean).shouldHaveNoMoreInteractions();
-        then(jmxClient).shouldHaveZeroInteractions();
-        then(snackbar).should().warn(any());
-        then(snackbar).shouldHaveNoMoreInteractions();
+        retry(() -> {
+            try {
+                then(queueViewBean).should().getName();
+                then(queueViewBean).should().browse();
+                then(queueViewBean).should(atLeast(1)).getMaxPageSize();
+                then(queueViewBean).should(times(3)).removeMessage(anyString());
+                then(queueViewBean).shouldHaveNoMoreInteractions();
+                then(jmxClient).shouldHaveZeroInteractions();
+                then(snackbar).should().warn(any());
+                then(snackbar).shouldHaveNoMoreInteractions();
+            } catch (final Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
         assertThat("table current items count should be 40", table::getCurrentItemsCount, is(40));
         assertThat("footer should be 'Showing 40 of 40 (messages are limited by browser page size 400)'", footer::getText, is("Showing 40 of 40 (messages are limited by browser page size 400)"));
     }
@@ -601,21 +604,21 @@ public class MessagesTest extends ApplicationTest {
                 .willReturn(false)
                 .willReturn(true);
 
-        // when
-        clickOn(table.getChildrenUnmodifiable().get(1))
+        clickOn(table)
                 .press(SHIFT)
-                .push(DOWN)
-                .push(DOWN)
-                .release(SHIFT)
-                .press(SECONDARY)
-                .release(SECONDARY)
+                .moveBy(0, 90)
+                .clickOn()
+                .release(SHIFT);
+
+        rightClickOn()
                 .clickOn("#copyTo");
-        retry(() -> clickOn("#autoCompleteJFXComboBox")
+
+        clickOn("#autoCompleteJFXComboBox")
                 .write("california")
                 .moveBy(-120, 30)
-                .press(PRIMARY).release(PRIMARY)
-                .clickOn("#select"));
-        retry(() -> clickOn("#confirm"));
+                .clickOn()
+                .clickOn("#select");
+        clickOn("#confirm");
 
         // then
         then(queueViewBean).should().getName();
@@ -630,7 +633,7 @@ public class MessagesTest extends ApplicationTest {
     }
 
     @Test
-    public void whenMoveMessagesTheyShouldBeMoviedToDestinationAndRemovedFromTable() throws Exception {
+    public void whenMoveMessagesTheyShouldBeMovedToDestinationAndRemovedFromTable() throws Exception {
         // given
         final JFXTreeTableView<Message> table = lookup("#table").query();
         final Label footer = lookup("#footer").query();
@@ -643,31 +646,37 @@ public class MessagesTest extends ApplicationTest {
                 .willReturn(true);
 
         // when
-        clickOn(table.getChildrenUnmodifiable().get(1))
+        clickOn(table)
                 .press(SHIFT)
-                .push(DOWN)
-                .push(DOWN)
-                .release(SHIFT)
-                .press(SECONDARY)
-                .release(SECONDARY)
+                .moveBy(0, 90)
+                .clickOn()
+                .release(SHIFT);
+        rightClickOn()
                 .clickOn("#moveTo");
+
         clickOn("#autoCompleteJFXComboBox")
                 .write("california")
                 .moveBy(-120, 30)
-                .press(PRIMARY).release(PRIMARY);
+                .clickOn();
         clickOn("#select");
         clickOn("#confirm");
 
         // then
-        then(queueViewBean).should().getName();
-        then(queueViewBean).should().browse();
-        then(queueViewBean).should(atLeast(1)).getMaxPageSize();
-        then(queueViewBean).should(times(3)).moveMessageTo(anyString(), eq("queue.test.california"));
-        then(queueViewBean).shouldHaveNoMoreInteractions();
-        then(jmxClient).should().getQueues();
-        then(queueViewBean).shouldHaveNoMoreInteractions();
-        then(snackbar).should().warn(any());
-        then(snackbar).shouldHaveNoMoreInteractions();
+        retry(() -> {
+            try {
+                then(queueViewBean).should().getName();
+                then(queueViewBean).should().browse();
+                then(queueViewBean).should(atLeast(1)).getMaxPageSize();
+                then(queueViewBean).should(times(3)).moveMessageTo(anyString(), eq("queue.test.california"));
+                then(queueViewBean).shouldHaveNoMoreInteractions();
+                then(jmxClient).should().getQueues();
+                then(jmxClient).shouldHaveNoMoreInteractions();
+                then(snackbar).should().warn(any());
+                then(snackbar).shouldHaveNoMoreInteractions();
+            } catch (final Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
         assertThat("table current items count should be 40", table::getCurrentItemsCount, is(40));
         assertThat("footer should be 'Showing 40 of 40 (messages are limited by browser page size 400)'", footer::getText, is("Showing 40 of 40 (messages are limited by browser page size 400)"));
     }
@@ -686,8 +695,7 @@ public class MessagesTest extends ApplicationTest {
                 .push(DOWN)
                 .push(DOWN)
                 .release(SHIFT)
-                .press(SECONDARY)
-                .release(SECONDARY)
+                .rightClickOn()
                 .clickOn("#copyToClipboard");
 
         // then
@@ -704,7 +712,7 @@ public class MessagesTest extends ApplicationTest {
     }
 
     @Test
-    public void whenPressControlCSelectedMessagesShouldBeCopiedToClipboard() throws Exception {
+    public void whenPushControlCSelectedMessagesShouldBeCopiedToClipboard() throws Exception {
         // given
         final JFXTreeTableView<Message> table = lookup("#table").query();
         final List<QueueViewMBean> queues = spyQueueViewMBean(50L, 0L, 1L);
@@ -717,7 +725,7 @@ public class MessagesTest extends ApplicationTest {
                 .push(DOWN)
                 .push(DOWN)
                 .release(SHIFT);
-        press(CONTROL, C).release(CONTROL, C);
+        push(CONTROL, C);
 
         // then
         final AtomicInteger linesNum = new AtomicInteger(-1);
@@ -728,8 +736,10 @@ public class MessagesTest extends ApplicationTest {
         then(jmxClient).shouldHaveZeroInteractions();
         then(snackbar).should().info(any());
         then(snackbar).shouldHaveNoMoreInteractions();
-        runLater(() -> linesNum.set(Clipboard.getSystemClipboard().getContent(PLAIN_TEXT).toString().split("\n").length));
-        assertThat("clipboard should contain three lines", linesNum::get, is(3));
+        runLater(() -> {
+            linesNum.set(Clipboard.getSystemClipboard().getContent(PLAIN_TEXT).toString().split("\n").length);
+            assertThat("clipboard should contain three lines", linesNum::get, is(3));
+        });
     }
 
     private void initializeTable(final JFXTreeTableView<Message> table) {
@@ -738,7 +748,9 @@ public class MessagesTest extends ApplicationTest {
     }
 
     private void scrollToLastColumn(final JFXTreeTableView<Message> table) {
-        runLater(() -> table.scrollToColumnIndex(table.getColumns().size() - 1));
-        retry(() -> clickOn("#add.column-header"));
+        retry(() -> {
+            runLater(() -> table.scrollToColumnIndex(table.getColumns().size() - 1));
+            clickOn("#add.column-header");
+        });
     }
 }

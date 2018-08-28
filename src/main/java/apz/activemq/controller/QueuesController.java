@@ -27,6 +27,8 @@ import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.StackPane;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -50,6 +52,7 @@ import static javafx.scene.input.KeyCode.C;
 
 public class QueuesController implements Initializable {
 
+    private final static Logger LOGGER = LoggerFactory.getLogger(QueuesController.class);
     private static final String FOOTER_FORMAT = "Showing %d of %d queues";
 
     @FXML
@@ -169,11 +172,11 @@ public class QueuesController implements Initializable {
 
                     queues.stream()
                             .filter(q -> !jmxQueueNames.contains(q.name.getValue()))
-                            .collect(collectingAndThen(toList(), queues::removeAll));
+                            .forEach(queues::remove);
 
                     jmxQueues.stream()
                             .filter(q -> !queueNames.contains(q.name.getValue()))
-                            .collect(collectingAndThen(toList(), queues::addAll));
+                            .forEach(queues::add);
 
                     queues.stream()
                             .map(q -> (Runnable) q::refresh)
@@ -182,7 +185,7 @@ public class QueuesController implements Initializable {
                     scheduledExecutorService.schedule(() -> runLater(() -> {
                         table.sort();
                         applyFilter().changed(search.textProperty(), search.getText(), search.getText());
-                    }), 300, MILLISECONDS);
+                    }), 1000, MILLISECONDS);
 
                     progressBar.setProgress(0.0);
                 });
@@ -228,9 +231,8 @@ public class QueuesController implements Initializable {
                 snackbar.info(format("%s has been purged", selectedQueue.name.getValue()));
 
             } catch (final RuntimeException e) {
-                snackbar.error(format("Error purging %s", selectedQueue.name.getValue()));
-                throw e;
-
+                snackbar.error(format("Purge %s failed", selectedQueue.name.getValue()));
+                LOGGER.error("error purging queue", e);
             } finally {
                 selectedQueue.refresh();
             }
@@ -257,8 +259,8 @@ public class QueuesController implements Initializable {
                 snackbar.info(format("%s has been deleted", selectedQueue.name.getValue()));
 
             } catch (final Exception e) {
-                snackbar.error(format("Error deleting %s", selectedQueue.name.getValue()));
-                throw new RuntimeException(e.getMessage(), e.getCause());
+                snackbar.error(format("Delete %s failed", selectedQueue.name.getValue()));
+                LOGGER.error("error deleting queue", e);
             }
         };
 

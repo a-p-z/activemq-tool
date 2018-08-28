@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import com.jfoenix.controls.JFXNodesList?>
+<?import com.jfoenix.controls.JFXProgressBar?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+
+<StackPane xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
+           fx:id="root" fx:controller="apz.activemq.controller.ProcessesController"
+           AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0"
+           AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0"
+           style="-fx-background-color: #f9f9f9;">
+    <VBox>
+        <Label id="title" maxWidth="Infinity" minHeight="84.0" style="-fx-background-color: #fbfbfb;" text="PROCESSES">
+            <font>
+                <Font name="System Bold" size="28.0" />
+            </font>
+            <padding>
+                <Insets left="30.0" top="10.0" />
+            </padding>
+        </Label>
+        <JFXProgressBar id="progressBar" maxWidth="Infinity" progress="0"/>
+        <TilePane fx:id="processContainer" vgap="10" hgap="10">
+            <padding>
+                <Insets left="10.0" top="10.0" bottom="10.0" right="10.0"/>
+            </padding>
+            <JFXNodesList fx:id="nodesList"/>
+        </TilePane>
+    </VBox>
+</StackPane>

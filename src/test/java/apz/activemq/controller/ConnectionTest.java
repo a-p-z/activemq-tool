@@ -10,6 +10,7 @@ import javafx.event.EventHandler;
 import javafx.scene.Scene;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
+import org.apache.camel.CamelContext;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -29,7 +30,6 @@ import static java.util.stream.Collectors.joining;
 import static javafx.application.Platform.runLater;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.then;
 
@@ -48,6 +48,9 @@ public class ConnectionTest extends ApplicationTest {
     @Mock
     private SimpleSnackbar snackbar;
 
+    @Mock
+    private CamelContext camelContext;
+
     private final StackPane stackPane = new StackPane();
 
     private ConnectionController connectionController;
@@ -61,6 +64,7 @@ public class ConnectionTest extends ApplicationTest {
         register("jmxClient", jmxClient);
         register("scheduledExecutorService", scheduledExecutorService);
         register("snackbar", snackbar);
+        register("camelContext", camelContext);
 
         connectionController = newInstance(ConnectionController.class);
 
@@ -79,7 +83,7 @@ public class ConnectionTest extends ApplicationTest {
         then(onConnectedAction).shouldHaveZeroInteractions();
         then(scheduledExecutorService).shouldHaveZeroInteractions();
         then(snackbar).shouldHaveZeroInteractions();
-        assertThat("dialog should be shown", lookup("#dialog")::query, notNullValue());
+        then(camelContext).shouldHaveZeroInteractions();
     }
 
     @Test
@@ -95,11 +99,11 @@ public class ConnectionTest extends ApplicationTest {
         retry(() -> {
             then(jmxClient).shouldHaveZeroInteractions();
             then(onConnectedAction).should().handle(any());
-            then(onConnectedAction).shouldHaveNoMoreInteractions();;
+            then(onConnectedAction).shouldHaveNoMoreInteractions();
             then(scheduledExecutorService).shouldHaveZeroInteractions();
             then(snackbar).shouldHaveZeroInteractions();
+            then(camelContext).shouldHaveZeroInteractions();
         });
-        assertThat("dialog should be closed", lookup("#dialog")::query, nullValue());
     }
 
     @Test
@@ -111,11 +115,11 @@ public class ConnectionTest extends ApplicationTest {
         runLater(() -> connectionController.setConnecting(true));
 
         // then
-
         then(jmxClient).shouldHaveZeroInteractions();
         then(onConnectedAction).shouldHaveZeroInteractions();
         then(scheduledExecutorService).shouldHaveZeroInteractions();
         then(snackbar).shouldHaveZeroInteractions();
+        then(camelContext).shouldHaveZeroInteractions();
         assertThat("progress should not be null", lookup("#progressBar")::query, notNullValue());
         assertThat("progress should be visible", lookup("#progressBar").query()::isVisible, is(true));
         assertThat("progress should be -1.0", lookup("#progressBar").queryAs(JFXProgressBar.class)::getProgress, is(-1.0));
@@ -134,9 +138,11 @@ public class ConnectionTest extends ApplicationTest {
         then(onConnectedAction).shouldHaveZeroInteractions();
         then(scheduledExecutorService).shouldHaveZeroInteractions();
         then(snackbar).shouldHaveZeroInteractions();
-        assertThat("progress should not be null", lookup("#progressBar")::query, notNullValue());
-        assertThat("progress should not be visible", lookup("#progressBar").query()::isVisible, is(false));
-        assertThat("progress should be -1.0", lookup("#progressBar").queryAs(JFXProgressBar.class)::getProgress, is(0.0));
+        then(camelContext).shouldHaveZeroInteractions();
+
+        final JFXProgressBar progressBar = lookup("#progressBar").queryAs(JFXProgressBar.class);
+        assertThat("progress should not be visible", progressBar::isVisible, is(false));
+        assertThat("progress should be -1.0", progressBar::getProgress, is(0.0));
     }
 
     @Test
@@ -152,6 +158,7 @@ public class ConnectionTest extends ApplicationTest {
         then(onConnectedAction).shouldHaveZeroInteractions();
         then(scheduledExecutorService).shouldHaveZeroInteractions();
         then(snackbar).shouldHaveZeroInteractions();
+        then(camelContext).shouldHaveZeroInteractions();
         assertThat("host should be 'activemq.test.com'", connectionController::getHost, is("activemq.test.com"));
     }
 
@@ -162,6 +169,7 @@ public class ConnectionTest extends ApplicationTest {
         then(onConnectedAction).shouldHaveZeroInteractions();
         then(scheduledExecutorService).shouldHaveZeroInteractions();
         then(snackbar).shouldHaveZeroInteractions();
+        then(camelContext).shouldHaveZeroInteractions();
         assertThat("default port should be " + DEFAULT_PORT, connectionController::getPort, is(DEFAULT_PORT));
     }
 
@@ -178,6 +186,7 @@ public class ConnectionTest extends ApplicationTest {
         then(onConnectedAction).shouldHaveZeroInteractions();
         then(scheduledExecutorService).shouldHaveZeroInteractions();
         then(snackbar).shouldHaveZeroInteractions();
+        then(camelContext).shouldHaveZeroInteractions();
         assertThat("port should be 2099", connectionController::getPort, is(2099));
     }
 
@@ -196,6 +205,7 @@ public class ConnectionTest extends ApplicationTest {
         then(scheduledExecutorService).should().submit(any(Runnable.class));
         then(scheduledExecutorService).shouldHaveNoMoreInteractions();
         then(snackbar).shouldHaveZeroInteractions();
+        then(camelContext).shouldHaveZeroInteractions();
     }
 
     @Test
@@ -217,8 +227,9 @@ public class ConnectionTest extends ApplicationTest {
         then(onConnectedAction).shouldHaveZeroInteractions();
         then(scheduledExecutorService).shouldHaveZeroInteractions();
         then(snackbar).shouldHaveZeroInteractions();
-        assertThat("error message should be 'Service URL contains non-ASCII character 0xa7'", errors,
-                is("Service URL contains non-ASCII character 0xa7"));
+        then(camelContext).shouldHaveZeroInteractions();
+        assertThat("error message should be 'malformed URL'", errors,
+                is("malformed URL"));
     }
 
     @Test
@@ -226,20 +237,23 @@ public class ConnectionTest extends ApplicationTest {
         // given
         runLater(() -> connectionController.show(stackPane));
 
-        // when
-        retry(() -> clickOn("#connect"));
+        retry(() -> {
+            // when
+            clickOn("#connect");
 
-        // then
-        final Supplier<String> errors = () -> lookup("#host").queryAs(JFXTextField.class)
-                .getValidators().stream()
-                .filter(ValidatorBase::getHasErrors)
-                .map(ValidatorBase::getMessage)
-                .collect(joining(", "));
-        then(jmxClient).shouldHaveZeroInteractions();
-        then(onConnectedAction).shouldHaveZeroInteractions();
-        then(scheduledExecutorService).shouldHaveZeroInteractions();
-        then(snackbar).shouldHaveZeroInteractions();
-        assertThat("error message should be 'host is required'", errors, is("host is required"));
+            // then
+            final Supplier<String> errors = () -> lookup("#host").queryAs(JFXTextField.class)
+                    .getValidators().stream()
+                    .filter(ValidatorBase::getHasErrors)
+                    .map(ValidatorBase::getMessage)
+                    .collect(joining(", "));
+            then(jmxClient).shouldHaveZeroInteractions();
+            then(onConnectedAction).shouldHaveZeroInteractions();
+            then(scheduledExecutorService).shouldHaveZeroInteractions();
+            then(snackbar).shouldHaveZeroInteractions();
+            then(camelContext).shouldHaveZeroInteractions();
+            assertThat("error message should be 'host is required'", errors, is("host is required"));
+        });
     }
 
     @Test
@@ -259,6 +273,7 @@ public class ConnectionTest extends ApplicationTest {
         then(onConnectedAction).shouldHaveZeroInteractions();
         then(scheduledExecutorService).shouldHaveZeroInteractions();
         then(snackbar).shouldHaveZeroInteractions();
+        then(camelContext).shouldHaveZeroInteractions();
         assertThat("error message should be reset", hasErrors, is(false));
     }
 }

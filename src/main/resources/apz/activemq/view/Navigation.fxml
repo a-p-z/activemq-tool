@@ -48,6 +48,18 @@
                                             textAlignment="CENTER"/>
                 </graphic>
             </JFXButton>
+            <JFXButton id="processes" text="Processes" onAction="#showProcessesView"
+                       prefWidth="220.0" prefHeight="54.0"
+                       textFill="#fbfbfb"
+                       alignment="BASELINE_LEFT">
+                <font>
+                    <Font size="14.0"/>
+                </font>
+                <graphic>
+                    <MaterialDesignIconView glyphName="VIEW_DASHBOARD" wrappingWidth="28.0" size="18" fill="#fbfbfb"
+                                            textAlignment="CENTER"/>
+                </graphic>
+            </JFXButton>
         </VBox>
         <JFXButton id="info" text=" " onAction="#showInfoView"
                    prefWidth="220.0" prefHeight="54.0"

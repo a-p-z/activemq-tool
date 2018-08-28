@@ -1,22 +1,19 @@
 package apz.activemq.rowfactory;
 
-import apz.activemq.model.Queue;
-import apz.activemq.controller.QueuesController;
 import apz.activemq.contextmenu.QueueRowContextMenu;
+import apz.activemq.controller.QueuesController;
+import apz.activemq.model.Queue;
 import javafx.scene.control.TreeTableRow;
 import javafx.scene.control.TreeTableView;
 import javafx.util.Callback;
 
-import static java.util.Objects.requireNonNull;
+import javax.annotation.Nonnull;
 
 public class QueueRowFactory implements Callback<TreeTableView<Queue>, TreeTableRow<Queue>> {
 
     private final QueueRowContextMenu queueRowContextMenu;
 
-    public QueueRowFactory(final QueuesController controller) {
-
-        requireNonNull(controller, "controller must be not null");
-
+    public QueueRowFactory(final @Nonnull QueuesController controller) {
         this.queueRowContextMenu = new QueueRowContextMenu(controller);
     }
 

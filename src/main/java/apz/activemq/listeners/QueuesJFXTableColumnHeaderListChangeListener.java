@@ -1,7 +1,6 @@
 package apz.activemq.listeners;
 
 import javafx.collections.ListChangeListener;
-import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
@@ -15,11 +14,9 @@ public class QueuesJFXTableColumnHeaderListChangeListener implements ListChangeL
 
     private static final Logger LOGGER = LoggerFactory.getLogger(QueuesJFXTableColumnHeaderListChangeListener.class);
 
-    private final ObservableList<Node> childrenUnmodifiable;
     private final double value;
 
-    public QueuesJFXTableColumnHeaderListChangeListener(final ObservableList<Node> childrenUnmodifiable, double value) {
-        this.childrenUnmodifiable = childrenUnmodifiable;
+    public QueuesJFXTableColumnHeaderListChangeListener(double value) {
         this.value = value;
     }
 

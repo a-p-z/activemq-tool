@@ -4,16 +4,14 @@ import org.hamcrest.Matcher;
 import org.junit.Assert;
 import org.junit.Assume;
 
+import javax.annotation.Nonnull;
 import java.util.function.Supplier;
 
 import static java.lang.Thread.sleep;
-import static java.util.Objects.requireNonNull;
 
 public class AssertUtils {
 
-    public static void retry(final Runnable runnable) {
-
-        requireNonNull(runnable, "runnable must not be null");
+    public static void retry(final @Nonnull Runnable runnable) {
 
         for (int i = 0; i < 49; i++) {
             try {

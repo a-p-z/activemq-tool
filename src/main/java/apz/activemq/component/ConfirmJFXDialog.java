@@ -6,25 +6,20 @@ import com.jfoenix.controls.JFXDialogLayout;
 import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
 
-import static java.util.Objects.requireNonNull;
+import javax.annotation.Nonnull;
+
 import static javafx.scene.text.Font.font;
 import static javafx.scene.text.FontWeight.BOLD;
 
 public class ConfirmJFXDialog extends JFXDialog {
 
-    public ConfirmJFXDialog(final StackPane container,
-                                 final Runnable action,
-                                 final String headingText,
-                                 final String bodyText,
-                                 final String buttonText) {
+    public ConfirmJFXDialog(final @Nonnull StackPane container,
+                            final @Nonnull Runnable action,
+                            final @Nonnull String headingText,
+                            final @Nonnull String bodyText,
+                            final @Nonnull String buttonText) {
 
         super();
-
-        requireNonNull(container, "container must be not null");
-        requireNonNull(action, "action must be not null");
-        requireNonNull(headingText, "headingText must be not null");
-        requireNonNull(bodyText, "bodyText must be not null");
-        requireNonNull(buttonText, "buttonText must be not null");
 
         final JFXDialogLayout content = new JFXDialogLayout();
         final Label heading = new Label(headingText);

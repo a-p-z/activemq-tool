@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import com.jfoenix.controls.JFXButton?>
+<?import de.jensd.fx.glyphs.materialdesignicons.MaterialDesignIconView?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane fx:id="root" maxWidth="Infinity" minHeight="130.0" minWidth="250.0" prefHeight="150.0"
+            xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml" style="-fx-background-color: #cf242a;"
+            fx:controller="apz.activemq.controller.ConsumerController">
+    <JFXButton fx:id="stopResumeButton" prefWidth="70.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0"
+               AnchorPane.topAnchor="0.0" style="-fx-background-color: db464b;" onAction="#stopResume">
+        <graphic>
+            <MaterialDesignIconView fx:id="iconView" glyphName="PAUSE" size="32" fill="#fbfbfb" textAlignment="CENTER"/>
+        </graphic>
+    </JFXButton>
+
+    <JFXButton id="closeButton" prefHeight="30.0" prefWidth="30.0" AnchorPane.rightAnchor="0.0"
+               AnchorPane.topAnchor="0.0" onAction="#close">
+        <font>
+            <Font size="14.0"/>
+        </font>
+        <graphic>
+            <MaterialDesignIconView glyphName="CLOSE" size="18" fill="#fbfbfb" textAlignment="CENTER"/>
+        </graphic>
+    </JFXButton>
+
+    <Label fx:id="title" AnchorPane.leftAnchor="80.0" AnchorPane.rightAnchor="30.0"
+           AnchorPane.topAnchor="5.0">
+        <font>
+            <Font size="18.0"/>
+        </font>
+    </Label>
+
+    <Label fx:id="info" AnchorPane.bottomAnchor="5.0" AnchorPane.leftAnchor="80.0"
+           AnchorPane.rightAnchor="10.0">
+        <font>
+            <Font size="14.0"/>
+        </font>
+    </Label>
+    <Label fx:id="from" AnchorPane.bottomAnchor="100.0" AnchorPane.leftAnchor="80.0"
+           AnchorPane.rightAnchor="10.0"/>
+    <Label fx:id="marshal" AnchorPane.bottomAnchor="80.0" AnchorPane.leftAnchor="80.0"
+           AnchorPane.rightAnchor="10.0"/>
+    <Label fx:id="transform" AnchorPane.bottomAnchor="60.0" AnchorPane.leftAnchor="80.0"
+           AnchorPane.rightAnchor="10.0"/>
+    <Label fx:id="to" AnchorPane.bottomAnchor="40.0" AnchorPane.leftAnchor="80.0"
+           AnchorPane.rightAnchor="10.0"/>
+</AnchorPane>

@@ -5,11 +5,11 @@ import javafx.scene.Node;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
 
+import javax.annotation.Nonnull;
 import java.util.Collections;
 import java.util.List;
 
 import static java.util.Comparator.comparing;
-import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.collectingAndThen;
 import static java.util.stream.Collectors.toList;
 import static javafx.geometry.Side.BOTTOM;
@@ -18,17 +18,15 @@ public class ShowColumnContextMenu extends ContextMenu {
 
     private final JFXTreeTableView<?> table;
 
-    public ShowColumnContextMenu(final JFXTreeTableView<?> table) {
+    public ShowColumnContextMenu(final @Nonnull JFXTreeTableView<?> table) {
 
         super();
-
-        requireNonNull(table, "table must be not null");
 
         this.table = table;
     }
 
     @Override
-    public void show(final Node anchor, double screenX, double screenY) {
+    public void show(final @Nonnull Node anchor, double screenX, double screenY) {
 
         final List<MenuItem> menuItems = table.getColumns().stream()
                 .filter(column -> !column.isVisible())

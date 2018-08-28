@@ -1,6 +1,6 @@
 package apz.activemq.converter;
 
-import apz.activemq.controller.exception.JsonProcessingRuntimeException;
+import apz.activemq.converter.exception.JsonProcessingRuntimeException;
 import apz.activemq.model.Message;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;

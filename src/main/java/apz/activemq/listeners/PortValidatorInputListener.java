@@ -5,16 +5,13 @@ import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.scene.control.TextInputControl;
 
-import static java.util.Objects.requireNonNull;
+import javax.annotation.Nonnull;
 
 public class PortValidatorInputListener implements ChangeListener<String> {
 
     private final TextInputControl port;
 
-    public PortValidatorInputListener(final TextInputControl port) {
-
-        requireNonNull(port, "port must not be null");
-
+    public PortValidatorInputListener(final @Nonnull TextInputControl port) {
         this.port = port;
     }
 

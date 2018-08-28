@@ -1,31 +1,18 @@
 package apz.activemq.model;
 
 import com.jfoenix.controls.datamodels.treetable.RecursiveTreeObject;
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.IntegerProperty;
-import javafx.beans.property.LongProperty;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleIntegerProperty;
-import javafx.beans.property.SimpleLongProperty;
-import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
+import javafx.beans.property.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import javax.management.openmbean.CompositeData;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Map;
 import java.util.Objects;
 
-import static java.util.Objects.requireNonNull;
-import static org.apache.activemq.broker.jmx.CompositeDataConstants.BODY_LENGTH;
-import static org.apache.activemq.broker.jmx.CompositeDataConstants.BODY_PREVIEW;
-import static org.apache.activemq.broker.jmx.CompositeDataConstants.JMSXGROUP_ID;
-import static org.apache.activemq.broker.jmx.CompositeDataConstants.JMSXGROUP_SEQ;
-import static org.apache.activemq.broker.jmx.CompositeDataConstants.MESSAGE_TEXT;
+import static org.apache.activemq.broker.jmx.CompositeDataConstants.*;
 import static org.apache.activemq.broker.jmx.CompositeDataHelper.getMessageUserProperties;
 
 public class Message extends RecursiveTreeObject<Message> {
@@ -54,10 +41,7 @@ public class Message extends RecursiveTreeObject<Message> {
     public final StringProperty body;
     public final LongProperty size;
 
-    public Message(final CompositeData cdata) {
-
-        requireNonNull(cdata, "cdata must be not null");
-
+    public Message(final @Nonnull CompositeData cdata) {
         // Message Attributes Accessed as Properties:
         final String destination = get(cdata, "JMSDestination", String.class); // Destination used by the producer
         final String replyTo = get(cdata, "JMSReplyTo", String.class);
@@ -107,28 +91,24 @@ public class Message extends RecursiveTreeObject<Message> {
 
         this.messageUserProperties = new SimpleObjectProperty<>(messageUserProperties);
         this.body = new SimpleStringProperty(null != bodyPreview ? bodyPreview : body);
-        this.size = new SimpleLongProperty(null != size ? size : this.body.getValue().length());
+        this.size = new SimpleLongProperty(null != size ? size : (null != this.body.getValue() ? this.body.getValue().length() : 0));
     }
 
-    private static <T> T get(final CompositeData cdata, final String key, final Class<T> clazz) {
-
-        requireNonNull(cdata, "cdata must be not null");
-        requireNonNull(key, "key must be not null");
-        requireNonNull(clazz, "clazz must be not null");
+    private static <T> T get(final @Nonnull CompositeData cdata, final @Nonnull String key, final @Nonnull Class<T> clazz) {
 
         if (cdata.containsKey(key) && clazz.isInstance(cdata.get(key))) {
             return clazz.cast(cdata.get(key));
+
         } else if (cdata.containsKey(key) && null != cdata.get(key)) {
             LOGGER.warn("cdata[{}] = {}, {} is not instance of {}", key, cdata.get(key), cdata.get(key).getClass(), clazz);
             return null;
+
         } else {
             return null;
         }
     }
 
-    private String getBodyPreview(final CompositeData cdata) {
-
-        requireNonNull(cdata, "cdata must be not null");
+    private String getBodyPreview(final @Nonnull CompositeData cdata) {
 
         final Byte[] a = get(cdata, BODY_PREVIEW, Byte[].class);
 
@@ -144,10 +124,7 @@ public class Message extends RecursiveTreeObject<Message> {
         return null;
     }
 
-    public boolean contains(final Collection<String> keys, final String s) {
-
-        requireNonNull(keys, "keys must be not null");
-        requireNonNull(s, "s must be not null");
+    public boolean contains(final @Nonnull Collection<String> keys, final @Nonnull String s) {
 
         return keys.stream()
                 .map(this::getValue)
@@ -156,9 +133,7 @@ public class Message extends RecursiveTreeObject<Message> {
                 .anyMatch(v -> v.contains(s));
     }
 
-    private String getValue(final String key) {
-
-        requireNonNull(key, "key must be not null");
+    private String getValue(final @Nonnull String key) {
 
         final String value;
 

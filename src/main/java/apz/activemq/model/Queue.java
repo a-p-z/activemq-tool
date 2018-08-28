@@ -11,6 +11,7 @@ import org.apache.activemq.broker.jmx.QueueViewMBean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import javax.management.openmbean.OpenDataException;
 import java.util.Collections;
 import java.util.List;
@@ -19,7 +20,6 @@ import java.util.Optional;
 
 import static java.util.Arrays.stream;
 import static java.util.Collections.emptyList;
-import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.collectingAndThen;
 import static java.util.stream.Collectors.toList;
 
@@ -35,10 +35,7 @@ public class Queue extends RecursiveTreeObject<Queue> {
 
     private final QueueViewMBean queueView;
 
-    public Queue(final QueueViewMBean queueView) {
-
-        requireNonNull(queueView, "queueView must be not null");
-
+    public Queue(final @Nonnull QueueViewMBean queueView) {
         this.name.setValue(queueView.getName());
         this.queueView = queueView;
     }
@@ -88,9 +85,7 @@ public class Queue extends RecursiveTreeObject<Queue> {
                 .orElse(-1);
     }
 
-    public boolean removeMessage(final String messageId) {
-
-        requireNonNull(messageId, "messageId must be not null");
+    public boolean removeMessage(final @Nonnull String messageId) {
 
         LOGGER.info("removing message {} in {}", messageId, name.getValue());
 
@@ -111,10 +106,7 @@ public class Queue extends RecursiveTreeObject<Queue> {
         return result;
     }
 
-    public boolean copyMessageTo(final String messageId, final String destination) {
-
-        requireNonNull(messageId, "messageId must be not null");
-        requireNonNull(destination, "destination must be not null");
+    public boolean copyMessageTo(final @Nonnull String messageId, final @Nonnull String destination) {
 
         LOGGER.info("coping message {} from {} to {}", messageId, name.getValue(), destination);
 
@@ -135,10 +127,7 @@ public class Queue extends RecursiveTreeObject<Queue> {
         return result;
     }
 
-    public boolean moveMessageTo(final String messageId, final String destination) {
-
-        requireNonNull(messageId, "messageId must be not null");
-        requireNonNull(destination, "destination must be not null");
+    public boolean moveMessageTo(final @Nonnull String messageId, final @Nonnull String destination) {
 
         LOGGER.info("moving message {} from {} to {}", messageId, name.getValue(), destination);
 

@@ -1,7 +1,6 @@
 package apz.activemq.controller;
 
 import apz.activemq.injection.Inject;
-import com.sun.istack.internal.Nullable;
 import com.sun.javafx.application.HostServicesDelegate;
 import de.jensd.fx.glyphs.octicons.OctIconView;
 import javafx.event.ActionEvent;
@@ -12,6 +11,7 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
+import javax.annotation.Nullable;
 import java.net.URL;
 import java.util.Optional;
 import java.util.ResourceBundle;
@@ -37,7 +37,7 @@ public class InfoController implements Initializable {
     private HostServicesDelegate hostServices;
 
     @Override
-    public void initialize(final URL location, final ResourceBundle resources) {
+    public void initialize(final @Nullable URL location, final @Nullable ResourceBundle resources) {
 
         setDepth(infoCard, 1);
         final OctIconView github = new OctIconView(MARK_GITHUB);
@@ -47,7 +47,9 @@ public class InfoController implements Initializable {
 
     @FXML
     public void showRepository(final @Nullable ActionEvent event) {
+
         Optional.ofNullable(event).ifPresent(ActionEvent::consume);
+
         hostServices.showDocument(repository.getText());
     }
 }

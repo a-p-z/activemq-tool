@@ -7,6 +7,7 @@ import org.apache.activemq.broker.jmx.QueueViewMBean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import javax.management.MBeanServerConnection;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
@@ -42,7 +43,7 @@ public class JmxClient {
     private MBeanServerConnection connection = null;
     private BrokerViewMBean broker = null;
 
-    public JMXServiceURL connect(final String host, final Integer port) throws JmxConnectionException {
+    public JMXServiceURL connect(final @Nonnull String host, final @Nonnull Integer port) throws JmxConnectionException {
 
         try {
             final JMXServiceURL serviceURL = new JMXServiceURL(format(SERVICE_URL_FORMAT, host, port));

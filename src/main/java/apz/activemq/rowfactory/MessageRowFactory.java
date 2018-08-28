@@ -7,19 +7,16 @@ import javafx.scene.control.TreeTableRow;
 import javafx.scene.control.TreeTableView;
 import javafx.util.Callback;
 
-import static java.util.Objects.requireNonNull;
+import javax.annotation.Nonnull;
 
 public class MessageRowFactory implements Callback<TreeTableView<Message>, TreeTableRow<Message>> {
 
     private final MessagesController controller;
     private final MessageRowContextMenu messageRowContextMenu;
 
-    public MessageRowFactory(final MessagesController controller) {
-
-        requireNonNull(controller, "controller must be not null");
-
+    public MessageRowFactory(final @Nonnull MessagesController controller) {
         this.controller = controller;
-        messageRowContextMenu = new MessageRowContextMenu(controller);
+        this.messageRowContextMenu = new MessageRowContextMenu(controller);
     }
 
     @Override

@@ -4,15 +4,13 @@ import apz.activemq.controller.QueuesController;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
 
-import static java.util.Objects.requireNonNull;
+import javax.annotation.Nonnull;
 
 public class QueueRowContextMenu extends ContextMenu {
 
-    public QueueRowContextMenu(final QueuesController controller) {
+    public QueueRowContextMenu(final @Nonnull QueuesController controller) {
 
         super();
-
-        requireNonNull(controller, "controller must be not null");
 
         final MenuItem browseItem = new MenuItem("Browse queue");
         final MenuItem purgeItem = new MenuItem("Purge queue");

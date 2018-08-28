@@ -9,10 +9,11 @@ import javax.annotation.Nonnull;
 import java.lang.reflect.Field;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ExecutorService;
 import java.util.stream.Stream;
 
 import static java.util.Arrays.stream;
+import static java.util.concurrent.TimeUnit.SECONDS;
 
 public class Injector {
 
@@ -56,15 +57,33 @@ public class Injector {
     }
 
     /**
+     * Shutdown all executor services registered.
+     */
+    public static void shutdownExecutorServices() {
+
+        REGISTRY.values().stream()
+                .filter(ExecutorService.class::isInstance)
+                .map(ExecutorService.class::cast)
+                .peek(es -> {
+                    LOGGER.info("shutting down {}", es);
+                    es.shutdown();
+                })
+                .forEach(es -> {
+                    try {
+                        LOGGER.info("awaiting termination of {}", es);
+                        es.awaitTermination(30, SECONDS);
+                    } catch (final InterruptedException e) {
+                        LOGGER.error("error awaiting termination of " + es, e);
+                    }
+                });
+    }
+
+    /**
      * Removes all objects from registry
      * The registry will be empty after this call returns.
      */
     public static void clearRegistry() {
-        try {
-            get("scheduledExecutorService", ScheduledExecutorService.class).shutdown();
-        } catch (final QualifierNotFoundError e) {
-            LOGGER.warn(e.getMessage());
-        }
+        LOGGER.info("cleaning registry");
         REGISTRY.clear();
     }
 

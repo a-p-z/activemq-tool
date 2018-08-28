@@ -30,7 +30,7 @@ public class JMXServiceURLValidatorTest  extends ApplicationTest {
 
         // then
         assertThat("validator should have errors", jfxTextFieldRequiredValidator.getHasErrors(), is(true));
-        assertThat("message should be 'field is required'", jfxTextFieldRequiredValidator.getMessage(), is("Service URL contains non-ASCII character 0xa7"));
+        assertThat(jfxTextFieldRequiredValidator.getMessage(), is("malformed URL"));
     }
 
     @Test

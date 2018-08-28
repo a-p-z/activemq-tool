@@ -4,14 +4,12 @@ import com.jfoenix.controls.JFXTreeTableColumn;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
 
-import static java.util.Objects.requireNonNull;
+import javax.annotation.Nonnull;
 
 public class HideColumnContextMenu extends ContextMenu {
 
-    public HideColumnContextMenu(final JFXTreeTableColumn<?, ?> column) {
+    public HideColumnContextMenu(final @Nonnull JFXTreeTableColumn<?, ?> column) {
         super();
-
-        requireNonNull(column, "column must be not null");
 
         final MenuItem hide = new MenuItem("hide");
         hide.setId("hide");

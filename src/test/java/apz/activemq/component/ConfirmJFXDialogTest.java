@@ -14,6 +14,7 @@ import org.testfx.framework.junit.ApplicationTest;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static apz.activemq.utils.AssertUtils.assertThat;
+import static apz.activemq.utils.AssertUtils.retry;
 import static org.hamcrest.CoreMatchers.is;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -78,8 +79,10 @@ public class ConfirmJFXDialogTest extends ApplicationTest {
         clickOn("#confirm");
 
         // then
-        verify(action).run();
-        verifyNoMoreInteractions(action);
+        retry(() -> {
+            verify(action).run();
+            verifyNoMoreInteractions(action);
+        });
         assertThat("dialog should be closed", closed::get, is(true));
     }
 

@@ -3,23 +3,26 @@ package apz.activemq;
 import apz.activemq.component.SimpleSnackbar;
 import apz.activemq.controller.ConnectionController;
 import apz.activemq.controller.NavigationController;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import apz.activemq.injection.Injector;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 
+import static apz.activemq.Configuration.configureCamelContext;
 import static apz.activemq.Configuration.configureHostServices;
 import static apz.activemq.Configuration.configureJmxClient;
 import static apz.activemq.Configuration.configureMessageToStringConverter;
 import static apz.activemq.Configuration.configureObjectMapper;
 import static apz.activemq.Configuration.configureScheduledExecutorService;
+import static apz.activemq.Configuration.configureSerializationDataFormat;
 import static apz.activemq.controller.ControllerFactory.newInstance;
 import static apz.activemq.injection.Injector.clearRegistry;
 import static apz.activemq.injection.Injector.get;
 import static apz.activemq.injection.Injector.register;
+import static apz.activemq.injection.Injector.shutdownExecutorServices;
 
 public class ActiveMQTool extends Application {
 
@@ -29,7 +32,7 @@ public class ActiveMQTool extends Application {
     }
 
     @Override
-    public void start(final Stage stage) {
+    public void start(final Stage stage) throws Exception {
 
         final StackPane stackPane = new StackPane();
         final Scene scene = new Scene(stackPane, 800, 580);
@@ -40,6 +43,8 @@ public class ActiveMQTool extends Application {
         configureScheduledExecutorService();
         configureObjectMapper();
         configureMessageToStringConverter(get("objectMapper", ObjectMapper.class));
+        configureCamelContext();
+        configureSerializationDataFormat(get("objectMapper", ObjectMapper.class));
         register("snackbar", snackbar);
 
         final NavigationController navigationController = newInstance(NavigationController.class);
@@ -58,6 +63,7 @@ public class ActiveMQTool extends Application {
     @Override
     public void stop() throws Exception {
         super.stop();
+        shutdownExecutorServices();
         clearRegistry();
     }
 }

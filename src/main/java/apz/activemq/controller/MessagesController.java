@@ -17,7 +17,6 @@ import com.jfoenix.controls.JFXTreeTableColumn;
 import com.jfoenix.controls.JFXTreeTableView;
 import com.jfoenix.controls.RecursiveTreeItem;
 import com.jfoenix.controls.datamodels.treetable.RecursiveTreeObject;
-import com.sun.istack.internal.Nullable;
 import javafx.beans.binding.StringExpression;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
@@ -31,16 +30,22 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TableColumnBase;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TreeItem;
+import javafx.scene.control.TreeTableView.TreeTableViewSelectionModel;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.StackPane;
 import org.apache.activemq.broker.jmx.DestinationViewMBean;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.net.URL;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.Set;
@@ -50,13 +55,13 @@ import java.util.function.Function;
 
 import static apz.activemq.util.Utils.setupCellValueFactory;
 import static java.lang.String.format;
-import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.stream.Collectors.collectingAndThen;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 import static javafx.application.Platform.runLater;
 import static javafx.beans.binding.Bindings.createStringBinding;
+import static javafx.collections.FXCollections.emptyObservableList;
 import static javafx.collections.FXCollections.observableArrayList;
 import static javafx.scene.control.SelectionMode.MULTIPLE;
 import static javafx.scene.control.TreeSortMode.ONLY_FIRST_LEVEL;
@@ -64,6 +69,7 @@ import static javafx.scene.input.KeyCode.C;
 
 public class MessagesController implements Initializable {
 
+    private final static Logger LOGGER = LoggerFactory.getLogger(MessagesController.class);
     private static final String FOOTER_FORMAT = "Showing %d of %d (messages are limited by browser page size %d)";
 
     @FXML
@@ -159,7 +165,8 @@ public class MessagesController implements Initializable {
     private final ObservableList<Message> messages = observableArrayList();
     private final ObjectProperty<Queue> queue = new SimpleObjectProperty<>();
 
-    public void initialize(final URL location, final ResourceBundle resources) {
+    @Override
+    public void initialize(final @Nonnull URL location, final @Nonnull ResourceBundle resources) {
 
         queueName.textProperty().bind(createStringBinding(() -> null != queue.getValue() ? queue.getValue().name.getValue() : "", queue));
 
@@ -269,7 +276,8 @@ public class MessagesController implements Initializable {
                         sortAndApplyFilter();
                     });
                 } catch (final RuntimeException e) {
-                    snackbar.error(format("Messages refresh failed: %s", e.getMessage()));
+                    snackbar.error("Messages refresh failed");
+                    LOGGER.error("error refreshing messages", e);
 
                 } finally {
                     runLater(() -> progressBar.setProgress(-0.0));
@@ -289,7 +297,9 @@ public class MessagesController implements Initializable {
      */
     @FXML
     public void onMouseEnteredInQueueName(final @Nullable MouseEvent event) {
+
         Optional.ofNullable(event).ifPresent(Event::consume);
+
         separator.setText("<");
     }
 
@@ -300,7 +310,9 @@ public class MessagesController implements Initializable {
      */
     @FXML
     public void onMouseExitedFromQueueName(final @Nullable MouseEvent event) {
+
         Optional.ofNullable(event).ifPresent(Event::consume);
+
         separator.setText(">");
     }
 
@@ -308,9 +320,7 @@ public class MessagesController implements Initializable {
      * add message user column to the table if not present
      * @param messageUserKeys message user key
      */
-    public void addMessageUserColumns(final Set<?> messageUserKeys) {
-
-        requireNonNull(messageUserKeys, "messageUserKeys must not be null");
+    public void addMessageUserColumns(final @Nonnull Set<?> messageUserKeys) {
 
         final List<String> currentColumnNames = table.getColumns().stream()
                 .map(TableColumnBase::getText)
@@ -390,7 +400,7 @@ public class MessagesController implements Initializable {
         if (copied) {
             snackbar.info("Messages have been copied");
         } else {
-            snackbar.error("Error coping messages");
+            snackbar.error("Copy messages failed");
         }
 
         table.getSelectionModel().clearSelection();
@@ -429,10 +439,7 @@ public class MessagesController implements Initializable {
      *
      * @param queue queue
      */
-    void setQueue(final Queue queue) {
-
-        requireNonNull(queue, "queue must not be null");
-
+    void setQueue(final @Nonnull Queue queue) {
         this.queue.set(queue);
     }
 
@@ -441,10 +448,7 @@ public class MessagesController implements Initializable {
      *
      * @param parent queue controller
      */
-    void setParent(final QueuesController parent) {
-
-        requireNonNull(parent, "parent must not be null");
-
+    void setParent(final @Nonnull QueuesController parent) {
         // when click on title back to queues view
         queueName.setOnMouseClicked(event -> {
             parent.removeChild(root);
@@ -480,8 +484,12 @@ public class MessagesController implements Initializable {
      */
     private List<Message> getSelectedMessages() {
 
-        return table.getSelectionModel().getSelectedItems().stream()
+        final TreeTableViewSelectionModel<Message> selectionModel = table.getSelectionModel();
+        final ObservableList<TreeItem<Message>> selectedItems = null != selectionModel ? selectionModel.getSelectedItems() : emptyObservableList();
+
+        return selectedItems.stream()
                 .map(TreeItem::getValue)
+                .filter(Objects::nonNull)
                 .collect(collectingAndThen(toList(), Collections::unmodifiableList));
     }
 
@@ -493,12 +501,14 @@ public class MessagesController implements Initializable {
         }), 300, MILLISECONDS);
     }
 
-    private void snackbar(final String action, final long count, final int total) {
+    private void snackbar(final @Nonnull String action, final long count, final int total) {
 
         if (count == total) {
             snackbar.info(format("All message have been %s", action));
+
         } else if (count > 0) {
             snackbar.warn(format("%d of %d have not been %s", total - count, total, action));
+
         } else {
             snackbar.error(format("No message have been %s", action));
         }

@@ -17,7 +17,9 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
+import org.apache.camel.CamelContext;
 
+import javax.annotation.Nonnull;
 import java.net.URL;
 import java.util.ResourceBundle;
 import java.util.concurrent.ScheduledExecutorService;
@@ -48,6 +50,9 @@ public class ConnectionController implements Initializable {
     private JmxClient jmxClient;
 
     @Inject
+    private CamelContext camelContext;
+
+    @Inject
     private ScheduledExecutorService scheduledExecutorService;
 
     @Inject
@@ -56,7 +61,8 @@ public class ConnectionController implements Initializable {
     @FXML
     private JFXProgressBar progressBar;
 
-    public void initialize(final URL location, final ResourceBundle resources) {
+    @Override
+    public void initialize(final @Nonnull URL location, final @Nonnull ResourceBundle resources) {
         // head
         head.setFont(font("Verdana, Helvetica, Arial, sans-serif", NORMAL, 14));
 
@@ -75,7 +81,7 @@ public class ConnectionController implements Initializable {
         port.textProperty().addListener(new PortValidatorInputListener(port));
     }
 
-    public void show(final StackPane container) {
+    public void show(final @Nonnull StackPane container) {
         dialog.setDialogContainer(container);
         dialog.show();
     }
@@ -84,14 +90,14 @@ public class ConnectionController implements Initializable {
         dialog.close();
     }
 
-    public void setOnConnected(final EventHandler<? super JFXDialogEvent> handler) {
+    public void setOnConnected(final @Nonnull EventHandler<? super JFXDialogEvent> handler) {
         dialog.setOnDialogClosed(handler);
     }
 
     @FXML
     private void connect() {
         if (host.validate()) {
-            scheduledExecutorService.submit(new ConnectTask(this, snackbar, jmxClient));
+            scheduledExecutorService.submit(new ConnectTask(this, snackbar, jmxClient, camelContext));
         }
     }
 
