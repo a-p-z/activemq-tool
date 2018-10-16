@@ -60,7 +60,7 @@ import static org.mockito.Mockito.atMost;
 import static org.mockito.Mockito.times;
 
 @RunWith(MockitoJUnitRunner.Silent.class)
-public class QueuesTest extends ApplicationTest {
+public class QueuesControllerTest extends ApplicationTest {
 
     @Mock
     private JmxClient jmxClient;

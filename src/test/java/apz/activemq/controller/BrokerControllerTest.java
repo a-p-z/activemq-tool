@@ -26,7 +26,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 
 @RunWith(MockitoJUnitRunner.Silent.class)
-public class BrokerTest extends ApplicationTest {
+public class BrokerControllerTest extends ApplicationTest {
 
     @Mock
     private JmxClient jmxClient;

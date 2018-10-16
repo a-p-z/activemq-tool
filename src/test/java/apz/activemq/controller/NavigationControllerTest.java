@@ -27,7 +27,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 
 @RunWith(MockitoJUnitRunner.Silent.class)
-public class NavigationTest extends ApplicationTest {
+public class NavigationControllerTest extends ApplicationTest {
 
     @Mock
     private HostServicesDelegate hostServices;

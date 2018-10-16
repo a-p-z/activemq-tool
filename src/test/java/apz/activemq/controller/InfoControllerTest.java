@@ -20,7 +20,7 @@ import static org.junit.Assert.assertThat;
 import static org.mockito.BDDMockito.then;
 
 @RunWith(MockitoJUnitRunner.class)
-public class InfoTest extends ApplicationTest {
+public class InfoControllerTest extends ApplicationTest {
 
     @Mock
     private HostServicesDelegate hostServices;

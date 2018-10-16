@@ -16,6 +16,7 @@ import org.testfx.framework.junit.ApplicationTest;
 
 import java.io.IOException;
 
+import static apz.activemq.utils.AssertUtils.retry;
 import static apz.activemq.utils.MockUtils.spyBrokerViewMBean;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -23,8 +24,6 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 @RunWith(MockitoJUnitRunner.Silent.class)
 public class ConnectTaskTest extends ApplicationTest {
@@ -45,7 +44,7 @@ public class ConnectTaskTest extends ApplicationTest {
     private ConnectTask connectTask;
 
     @Test
-    public void onSuccessfulConnectionControllerShouldBeClosed() throws JmxConnectionException {
+    public void onSuccessfulConnectionControllerShouldBeClosed() {
         // given
         final BrokerViewMBean brokerViewMBean = spyBrokerViewMBean("id", "name", "version", "uptime", 30, 60, 90);
         doAnswer(answer -> "activemq.test.com").when(connectionController).getHost();
@@ -57,17 +56,23 @@ public class ConnectTaskTest extends ApplicationTest {
         connectTask.run();
 
         // then
-        verify(connectionController).setConnecting(true);
-        verify(connectionController).getHost();
-        verify(connectionController).getPort();
-        verify(connectionController).close();
-        verify(connectionController).setConnecting(false);
-        verifyNoMoreInteractions(connectionController);
-        verify(jmxClient).connect("activemq.test.com", 1099);
-        then(jmxClient).should().getBroker();
-        then(jmxClient).shouldHaveNoMoreInteractions();
-        verify(snackbar).info(anyString());
-        verifyNoMoreInteractions(snackbar);
+        retry(() -> {
+            then(connectionController).should().setConnecting(true);
+            then(connectionController).should().getHost();
+            then(connectionController).should().getPort();
+            then(connectionController).should().close();
+            then(connectionController).should().setConnecting(false);
+            try {
+                then(jmxClient).should().connect("activemq.test.com", 1099);
+            } catch (JmxConnectionException e) {
+                throw new RuntimeException(e);
+            }
+            then(jmxClient).should().getBroker();
+            then(snackbar).should().info(anyString());
+            then(connectionController).shouldHaveNoMoreInteractions();
+            then(jmxClient).shouldHaveNoMoreInteractions();
+            then(snackbar).shouldHaveNoMoreInteractions();
+        });
     }
 
     @Test
@@ -83,14 +88,21 @@ public class ConnectTaskTest extends ApplicationTest {
         connectTask.run();
 
         // then
-        verify(connectionController).setConnecting(true);
-        verify(connectionController).getHost();
-        verify(connectionController).getPort();
-        verify(connectionController).setConnecting(false);
-        verifyNoMoreInteractions(connectionController);
-        verify(jmxClient).connect("activemq.test.com", 1099);
-        verifyNoMoreInteractions(jmxClient);
-        verify(snackbar).error(anyString());
-        then(snackbar).shouldHaveNoMoreInteractions();
+        retry(() -> {
+            then(connectionController).should().setConnecting(true);
+            then(connectionController).should().getHost();
+            then(connectionController).should().getPort();
+            then(connectionController).should().setConnecting(false);
+            try {
+                then(jmxClient).should().connect("activemq.test.com", 1099);
+            } catch (final JmxConnectionException e) {
+                throw new RuntimeException(e);
+            }
+            then(snackbar).should().error(anyString());
+
+            then(connectionController).shouldHaveNoMoreInteractions();
+            then(jmxClient).shouldHaveNoMoreInteractions();
+            then(snackbar).shouldHaveNoMoreInteractions();
+        });
     }
 }

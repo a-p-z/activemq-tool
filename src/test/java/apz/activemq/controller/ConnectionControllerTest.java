@@ -34,7 +34,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.then;
 
 @RunWith(MockitoJUnitRunner.class)
-public class ConnectionTest extends ApplicationTest {
+public class ConnectionControllerTest extends ApplicationTest {
 
     @Mock
     private JmxClient jmxClient;

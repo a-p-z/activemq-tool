@@ -63,7 +63,7 @@ import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.times;
 
 @RunWith(MockitoJUnitRunner.Silent.class)
-public class MessagesTest extends ApplicationTest {
+public class MessagesControllerTest extends ApplicationTest {
 
     private final QueueViewMBean queueViewBean = spyQueueViewMBean(1L, 42L, 43L).get(0);
 
@@ -571,7 +571,7 @@ public class MessagesTest extends ApplicationTest {
         rightClickOn()
                 .clickOn("#delete");
 
-        clickOn("#confirm");
+        retry(() -> clickOn("#confirm"));
 
         // then
         retry(() -> {
