@@ -4,7 +4,7 @@ import apz.activemq.component.SimpleSnackbar;
 import apz.activemq.controller.ConnectionController;
 import apz.activemq.jmx.JmxClient;
 import apz.activemq.jmx.exception.JmxConnectionException;
-import org.apache.activemq.broker.jmx.BrokerViewMBean;
+import apz.activemq.utils.ActiveMQJMXService;
 import org.apache.camel.CamelContext;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -17,7 +17,6 @@ import org.testfx.framework.junit.ApplicationTest;
 import java.io.IOException;
 
 import static apz.activemq.utils.AssertUtils.retry;
-import static apz.activemq.utils.MockUtils.spyBrokerViewMBean;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
@@ -25,8 +24,10 @@ import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
 
-@RunWith(MockitoJUnitRunner.Silent.class)
+@RunWith(MockitoJUnitRunner.class)
 public class ConnectTaskTest extends ApplicationTest {
+
+    private static final ActiveMQJMXService ACTIVE_MQJMX_SERVICE = new ActiveMQJMXService();
 
     @Spy
     private ConnectionController connectionController;
@@ -46,12 +47,11 @@ public class ConnectTaskTest extends ApplicationTest {
     @Test
     public void onSuccessfulConnectionControllerShouldBeClosed() {
         // given
-        final BrokerViewMBean brokerViewMBean = spyBrokerViewMBean("id", "name", "version", "uptime", 30, 60, 90);
         doAnswer(answer -> "activemq.test.com").when(connectionController).getHost();
         doAnswer(answer -> 1099).when(connectionController).getPort();
         doNothing().when(connectionController).setConnecting(anyBoolean());
         doNothing().when(connectionController).close();
-        given(jmxClient.getBroker()).willReturn(brokerViewMBean);
+        given(jmxClient.getBroker()).willReturn(ACTIVE_MQJMX_SERVICE.getBroker());
         // when
         connectTask.run();
 

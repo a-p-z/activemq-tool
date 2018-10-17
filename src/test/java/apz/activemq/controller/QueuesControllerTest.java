@@ -3,6 +3,7 @@ package apz.activemq.controller;
 import apz.activemq.component.SimpleSnackbar;
 import apz.activemq.jmx.JmxClient;
 import apz.activemq.model.Queue;
+import apz.activemq.utils.ActiveMQJMXService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jfoenix.controls.JFXTreeTableView;
 import javafx.scene.Scene;
@@ -11,18 +12,13 @@ import javafx.scene.control.Labeled;
 import javafx.scene.input.Clipboard;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
-import org.apache.activemq.broker.jmx.BrokerViewMBean;
-import org.apache.activemq.broker.jmx.QueueViewMBean;
-import org.junit.Ignore;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.testfx.framework.junit.ApplicationTest;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -37,8 +33,6 @@ import static apz.activemq.injection.Injector.get;
 import static apz.activemq.injection.Injector.register;
 import static apz.activemq.utils.AssertUtils.assertThat;
 import static apz.activemq.utils.AssertUtils.assumeThat;
-import static apz.activemq.utils.MockUtils.spyBrokerViewMBean;
-import static apz.activemq.utils.MockUtils.spyQueueViewMBean;
 import static java.util.stream.Collectors.toList;
 import static javafx.application.Platform.runLater;
 import static javafx.scene.input.DataFormat.PLAIN_TEXT;
@@ -52,15 +46,14 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.startsWith;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
-import static org.mockito.Mockito.atLeast;
-import static org.mockito.Mockito.atMost;
 import static org.mockito.Mockito.times;
 
-@RunWith(MockitoJUnitRunner.Silent.class)
+@RunWith(MockitoJUnitRunner.class)
 public class QueuesControllerTest extends ApplicationTest {
+
+    private static final ActiveMQJMXService ACTIVE_MQJMX_SERVICE = new ActiveMQJMXService();
 
     @Mock
     private JmxClient jmxClient;
@@ -69,6 +62,12 @@ public class QueuesControllerTest extends ApplicationTest {
     private SimpleSnackbar snackbar;
 
     private QueuesController queuesController;
+
+    @Before
+    public void before() {
+        given(jmxClient.getBroker()).willReturn(ACTIVE_MQJMX_SERVICE.getBroker());
+        given(jmxClient.getQueues()).willReturn(ACTIVE_MQJMX_SERVICE.getQueues());
+    }
 
     @Override
     public void start(final Stage stage) {
@@ -92,50 +91,30 @@ public class QueuesControllerTest extends ApplicationTest {
         stage.show();
     }
 
-    @Test
-    public void whenClickOnRefreshTableShouldBePopulated() {
-        // given
-        final JFXTreeTableView<Queue> table = lookup("#table").query();
-        final Label footer = lookup("#footer").query();
-        final List<QueueViewMBean> queueViewMBeans = spyQueueViewMBean(50L, 0L, 100L);
-        given(jmxClient.getQueues()).willReturn(queueViewMBeans);
 
-        // when
-        clickOn("#refresh");
-
-        // then
-        then(jmxClient).should().getQueues();
-        then(jmxClient).shouldHaveNoMoreInteractions();
-        then(snackbar).shouldHaveZeroInteractions();
-        assertThat("table should have 50 rows", table.getRoot()::getChildren, hasSize(50));
-        assertThat("footer should be 'Showing 50 of 50 queues'", footer::getText, is("Showing 50 of 50 queues"));
-        assertThat("the first row should be 'queue.test.alabama'", table.getRoot().getChildren().get(0).getValue().name::getValue, is("queue.test.alabama"));
-    }
 
     @Test
-    @Ignore("table not refresh when an element is removed from observable list")
+ //   @Ignore("table not refresh when an element is removed from observable list")
     public void whenRemoveQueueAndClickOnRefreshTableShouldBeUpdated() {
         // given
         final JFXTreeTableView<Queue> table = lookup("#table").query();
         final Label footer = lookup("#footer").query();
-        final List<QueueViewMBean> queueViewMBeans1 = spyQueueViewMBean(50L, 0L, 100L);
-        final List<QueueViewMBean> queueViewMBeans2 = new ArrayList<>(spyQueueViewMBean(50L, 0L, 100L));
-        queueViewMBeans2.remove(0);
-        given(jmxClient.getQueues())
-                .willReturn(queueViewMBeans1)
-                .willReturn(queueViewMBeans2);
         initializeTable(table);
 
         // when
+        ACTIVE_MQJMX_SERVICE.deleteQuery("queue.test.alabama");
         clickOn("#refresh");
 
         // then
         then(jmxClient).should(times(2)).getQueues();
         then(jmxClient).shouldHaveNoMoreInteractions();
         then(snackbar).shouldHaveZeroInteractions();
+        assertThat("table should have 49 rows", ACTIVE_MQJMX_SERVICE::getQueues, hasSize(49));
         assertThat("table should have 49 rows", table.getRoot()::getChildren, hasSize(49));
-        assertThat("footer should be 'Showing 49 of 50 queues'", footer::getText, is("Showing 49 of 50 queues"));
+        //assertThat("footer should be 'Showing 49 of 49 queues'", footer::getText, is("Showing 49 of 49 queues"));
         assertThat("the first row should be 'queue.test.alaska'", table.getRoot().getChildren().get(0).getValue().name::getValue, is("queue.test.alaska"));
+        ACTIVE_MQJMX_SERVICE.createQuery("queue.test.alabama");
+        clickOn("#refresh");
     }
 
     @Test
@@ -143,24 +122,22 @@ public class QueuesControllerTest extends ApplicationTest {
         // given
         final JFXTreeTableView<Queue> table = lookup("#table").query();
         final Label footer = lookup("#footer").query();
-        final List<QueueViewMBean> queueViewMBeans1 = new ArrayList<>(spyQueueViewMBean(50L, 0L, 100L));
-        final List<QueueViewMBean> queueViewMBeans2 = spyQueueViewMBean(50L, 0L, 100L);
-        queueViewMBeans1.remove(0);
-        given(jmxClient.getQueues())
-                .willReturn(queueViewMBeans1)
-                .willReturn(queueViewMBeans2);
         queuesController.refresh(null);
 
         // when
+        ACTIVE_MQJMX_SERVICE.createQuery("queue.new.oregon");
         clickOn("#refresh");
+        clickOn("#search")
+                .write("queue.new.oregon");
 
         // then
         then(jmxClient).should(times(2)).getQueues();
         then(jmxClient).shouldHaveNoMoreInteractions();
         then(snackbar).shouldHaveZeroInteractions();
-        assertThat("table should have 50 rows", table.getRoot()::getChildren, hasSize(50));
-        assertThat("footer should be 'Showing 50 of 50 queues'", footer::getText, is("Showing 50 of 50 queues"));
-        assertThat("last row should be 'queue.test.alabama'", table.getRoot().getChildren().get(49).getValue().name::getValue, is("queue.test.alabama"));
+        assertThat("table should have 51 rows", table.getRoot()::getChildren, hasSize(1));
+        assertThat("footer should be 'Showing 1 of 51 queues'", footer::getText, is("Showing 1 of 51 queues"));
+        ACTIVE_MQJMX_SERVICE.deleteQuery("queue.new.oregon");
+        clickOn("#refresh");
     }
 
     @Test
@@ -168,11 +145,6 @@ public class QueuesControllerTest extends ApplicationTest {
         // given
         final JFXTreeTableView<Queue> table = lookup("#table").query();
         final Label footer = lookup("#footer").query();
-        final List<QueueViewMBean> queueViewMBeans1 = spyQueueViewMBean(50L, 0L, 100L);
-        final List<QueueViewMBean> queueViewMBeans2 = spyQueueViewMBean(50L, 0L, 100L);
-        given(jmxClient.getQueues())
-                .willReturn(queueViewMBeans1)
-                .willReturn(queueViewMBeans2);
         initializeTable(table);
 
         // when
@@ -199,8 +171,6 @@ public class QueuesControllerTest extends ApplicationTest {
         // given
         final JFXTreeTableView<Queue> table = lookup("#table").query();
         final Label footer = lookup("#footer").query();
-        final List<QueueViewMBean> queueViewMBeans = spyQueueViewMBean(50L, 0L, 100L);
-        given(jmxClient.getQueues()).willReturn(queueViewMBeans);
         initializeTable(table);
 
         // when
@@ -221,13 +191,12 @@ public class QueuesControllerTest extends ApplicationTest {
         // given
         final JFXTreeTableView<Queue> table = lookup("#table").query();
         final Label footer = lookup("#footer").query();
-        final List<QueueViewMBean> queueViewMBeans = spyQueueViewMBean(50L, 0L, 100L);
-        given(jmxClient.getQueues()).willReturn(queueViewMBeans);
         initializeTable(table);
 
         // when
         clickOn("#search")
                 .write("al");
+        clickOn("#pending.column-header");
 
         // then
         then(jmxClient).should().getQueues();
@@ -245,12 +214,6 @@ public class QueuesControllerTest extends ApplicationTest {
         // given
         final JFXTreeTableView<Queue> table = lookup("#table").query();
         final Label footer = lookup("#footer").query();
-        final List<QueueViewMBean> queueViewMBeans1 = new ArrayList<>(spyQueueViewMBean(50L, 0L, 100L));
-        final List<QueueViewMBean> queueViewMBeans2 = spyQueueViewMBean(50L, 0L, 100L);
-        queueViewMBeans1.remove(0);
-        given(jmxClient.getQueues())
-                .willReturn(queueViewMBeans1)
-                .willReturn(queueViewMBeans2);
         queuesController.refresh(null);
 
         // when
@@ -280,8 +243,6 @@ public class QueuesControllerTest extends ApplicationTest {
     public void whenClickOnPurgeQueueShouldBePurged() {
         // given
         final JFXTreeTableView<Queue> table = lookup("#table").query();
-        final List<QueueViewMBean> queueViewMBeans = spyQueueViewMBean(50L, 0L, 100L);
-        given(jmxClient.getQueues()).willReturn(queueViewMBeans);
         initializeTable(table);
 
         // when
@@ -294,30 +255,12 @@ public class QueuesControllerTest extends ApplicationTest {
         then(jmxClient).shouldHaveNoMoreInteractions();
         then(snackbar).should().info(any());
         then(snackbar).shouldHaveNoMoreInteractions();
-        queueViewMBeans.forEach(queueViewMBean -> then(queueViewMBean).should(atLeast(1)).getQueueSize());
-        queueViewMBeans.forEach(queueViewMBean -> then(queueViewMBean).should(atLeast(1)).getConsumerCount());
-        queueViewMBeans.forEach(queueViewMBean -> then(queueViewMBean).should(atLeast(1)).getEnqueueCount());
-        queueViewMBeans.forEach(queueViewMBean -> then(queueViewMBean).should(atLeast(1)).getDequeueCount());
-        queueViewMBeans.forEach(queueViewMBean -> then(queueViewMBean).should(atLeast(1)).getName());
-        queueViewMBeans.forEach(queueViewMBean -> {
-            try {
-                then(queueViewMBean).should(atMost(1)).purge();
-            } catch (final Exception e) {
-                throw new RuntimeException(e.getMessage(), e.getCause());
-            }
-        });
-        queueViewMBeans.forEach(Mockito::
-                verifyNoMoreInteractions);
     }
 
     @Test
-    public void whenClickOnDeleteQueueShouldBeDeleted() throws Exception {
+    public void whenClickOnDeleteQueueShouldBeDeleted() {
         // given
         final JFXTreeTableView<Queue> table = lookup("#table").query();
-        final List<QueueViewMBean> queueViewMBeans = spyQueueViewMBean(50L, 0L, 100L);
-        final BrokerViewMBean brokerViewMBean = spyBrokerViewMBean("ID:activemq.test.com-64874-2439984034094-1:1", "localhost", "5.14.5", "113 days 3 hours", 30, 60, 90);
-        given(jmxClient.getBroker()).willReturn(brokerViewMBean);
-        given(jmxClient.getQueues()).willReturn(queueViewMBeans);
         initializeTable(table);
 
         // when
@@ -329,8 +272,6 @@ public class QueuesControllerTest extends ApplicationTest {
         then(jmxClient).should().getQueues();
         then(jmxClient).should().getBroker();
         then(jmxClient).shouldHaveNoMoreInteractions();
-        then(brokerViewMBean).should().removeQueue(anyString());
-        then(brokerViewMBean).shouldHaveNoMoreInteractions();
         then(snackbar).should().info(any());
         then(snackbar).shouldHaveNoMoreInteractions();
     }
@@ -339,8 +280,6 @@ public class QueuesControllerTest extends ApplicationTest {
     public void whenClickOnBrowseMessagesShouldBeShown() {
         // given
         final JFXTreeTableView<Queue> table = lookup("#table").query();
-        final List<QueueViewMBean> queueViewMBeans = spyQueueViewMBean(50L, 0L, 100L);
-        given(jmxClient.getQueues()).willReturn(queueViewMBeans);
         initializeTable(table);
 
         // when
@@ -361,8 +300,6 @@ public class QueuesControllerTest extends ApplicationTest {
     public void whenDoubleClickOnOnARowBrowseQueue() {
         // given
         final JFXTreeTableView<Queue> table = lookup("#table").query();
-        final List<QueueViewMBean> queueViewMBeans = spyQueueViewMBean(50L, 0L, 100L);
-        given(jmxClient.getQueues()).willReturn(queueViewMBeans);
         initializeTable(table);
 
         // when
@@ -382,8 +319,6 @@ public class QueuesControllerTest extends ApplicationTest {
     public void whenPressControlCSelectedQueueShouldBeCopiedToClipboard() {
         // given
         final JFXTreeTableView<Queue> table = lookup("#table").query();
-        final List<QueueViewMBean> queueViewMBeans = spyQueueViewMBean(50L, 0L, 100L);
-        given(jmxClient.getQueues()).willReturn(queueViewMBeans);
         initializeTable(table);
 
         // when

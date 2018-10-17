@@ -2,12 +2,12 @@ package apz.activemq.controller;
 
 import apz.activemq.component.SimpleSnackbar;
 import apz.activemq.jmx.JmxClient;
+import apz.activemq.utils.ActiveMQJMXService;
 import com.sun.javafx.application.HostServicesDelegate;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
-import org.apache.activemq.broker.jmx.BrokerViewMBean;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -20,14 +20,15 @@ import static apz.activemq.controller.ControllerFactory.newInstance;
 import static apz.activemq.injection.Injector.clearRegistry;
 import static apz.activemq.injection.Injector.register;
 import static apz.activemq.utils.AssertUtils.assertThat;
-import static apz.activemq.utils.MockUtils.spyBrokerViewMBean;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 
-@RunWith(MockitoJUnitRunner.Silent.class)
+@RunWith(MockitoJUnitRunner.class)
 public class NavigationControllerTest extends ApplicationTest {
+
+    private static final ActiveMQJMXService ACTIVE_MQJMX_SERVICE = new ActiveMQJMXService();
 
     @Mock
     private HostServicesDelegate hostServices;
@@ -79,8 +80,7 @@ public class NavigationControllerTest extends ApplicationTest {
     @Test
     public void whenClickOnBrokerTitleShouldBeBroker() {
         // given
-        final BrokerViewMBean brokerViewMBean = spyBrokerViewMBean("id", "name", "version", "uptime", 30, 60, 90);
-        given(jmxClient.getBroker()).willReturn(brokerViewMBean);
+        given(jmxClient.getBroker()).willReturn(ACTIVE_MQJMX_SERVICE.getBroker());
 
         // when
         clickOn("#broker");

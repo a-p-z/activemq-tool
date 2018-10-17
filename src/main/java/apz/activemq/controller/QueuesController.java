@@ -23,6 +23,7 @@ import javafx.fxml.Initializable;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import javafx.scene.control.TreeItem;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.MouseEvent;
@@ -168,11 +169,18 @@ public class QueuesController implements Initializable {
                         .map(q -> q.name.getValue())
                         .collect(collectingAndThen(toList(), Collections::unmodifiableList));
 
+                final List<Queue> notLongerExistQueues = queues.stream()
+                        .filter(q -> !jmxQueueNames.contains(q.name.getValue()))
+                        .collect(collectingAndThen(toList(), Collections::unmodifiableList));
+
+                List<TreeItem<Queue>> notLongerExistTreeItems = table.getRoot().getChildren().stream()
+                        .filter(q -> !jmxQueueNames.contains(q.getValue().name.getValue()))
+                        .collect(collectingAndThen(toList(), Collections::unmodifiableList));
+
                 runLater(() -> {
 
-                    queues.stream()
-                            .filter(q -> !jmxQueueNames.contains(q.name.getValue()))
-                            .forEach(queues::remove);
+                    notLongerExistQueues.forEach(queues::remove);
+                    notLongerExistTreeItems.forEach(table.getRoot().getChildren()::remove);
 
                     jmxQueues.stream()
                             .filter(q -> !queueNames.contains(q.name.getValue()))
@@ -185,7 +193,7 @@ public class QueuesController implements Initializable {
                     scheduledExecutorService.schedule(() -> runLater(() -> {
                         table.sort();
                         applyFilter().changed(search.textProperty(), search.getText(), search.getText());
-                    }), 1000, MILLISECONDS);
+                    }), 300, MILLISECONDS);
 
                     progressBar.setProgress(0.0);
                 });

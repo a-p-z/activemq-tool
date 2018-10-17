@@ -140,9 +140,9 @@ public class ConnectionControllerTest extends ApplicationTest {
         then(snackbar).shouldHaveZeroInteractions();
         then(camelContext).shouldHaveZeroInteractions();
 
-        final JFXProgressBar progressBar = lookup("#progressBar").queryAs(JFXProgressBar.class);
-        assertThat("progress should not be visible", progressBar::isVisible, is(false));
-        assertThat("progress should be -1.0", progressBar::getProgress, is(0.0));
+        assertThat("progress should not be null", lookup("#progressBar")::query, notNullValue());
+        assertThat("progress should not be visible", lookup("#progressBar").query()::isVisible, is(false));
+        assertThat("progress should be -1.0", lookup("#progressBar").queryAs(JFXProgressBar.class)::getProgress, is(0.0));
     }
 
     @Test

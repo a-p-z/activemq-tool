@@ -76,6 +76,7 @@ public class ConfirmJFXDialogTest extends ApplicationTest {
         dialog.setOnDialogClosed(event -> closed.set(true));
 
         // when
+        sleep(500);
         clickOn("#confirm");
 
         // then
