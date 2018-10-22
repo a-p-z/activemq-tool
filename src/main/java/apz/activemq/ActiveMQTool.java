@@ -6,28 +6,21 @@ import apz.activemq.controller.NavigationController;
 import apz.activemq.injection.Injector;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 
-import static apz.activemq.Configuration.configureCamelContext;
-import static apz.activemq.Configuration.configureHostServices;
-import static apz.activemq.Configuration.configureJmxClient;
-import static apz.activemq.Configuration.configureMessageToStringConverter;
-import static apz.activemq.Configuration.configureObjectMapper;
-import static apz.activemq.Configuration.configureScheduledExecutorService;
-import static apz.activemq.Configuration.configureSerializationDataFormat;
+import static apz.activemq.Configuration.*;
 import static apz.activemq.controller.ControllerFactory.newInstance;
-import static apz.activemq.injection.Injector.clearRegistry;
-import static apz.activemq.injection.Injector.get;
-import static apz.activemq.injection.Injector.register;
-import static apz.activemq.injection.Injector.shutdownExecutorServices;
+import static apz.activemq.injection.Injector.*;
+import static java.lang.Runtime.getRuntime;
 
 public class ActiveMQTool extends Application {
 
     public static void main(final String... args) {
-        Runtime.getRuntime().addShutdownHook(new Thread(Injector::clearRegistry));
+        getRuntime().addShutdownHook(new Thread(Injector::clearRegistry));
         launch(args);
     }
 
@@ -61,8 +54,8 @@ public class ActiveMQTool extends Application {
     }
 
     @Override
-    public void stop() throws Exception {
-        super.stop();
+    public void stop() {
+        Platform.exit();
         shutdownExecutorServices();
         clearRegistry();
     }

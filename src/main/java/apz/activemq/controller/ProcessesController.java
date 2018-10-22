@@ -2,6 +2,8 @@ package apz.activemq.controller;
 
 import apz.activemq.component.CreateConsumerJFXDialog;
 import apz.activemq.component.CreateProducerJFXDialog;
+import apz.activemq.injection.Inject;
+import apz.activemq.jmx.JmxClient;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXNodesList;
 import de.jensd.fx.glyphs.materialdesignicons.MaterialDesignIcon;
@@ -16,16 +18,19 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.TilePane;
 import javafx.scene.paint.Paint;
+import org.apache.activemq.broker.jmx.DestinationViewMBean;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.net.URL;
 import java.util.Optional;
 import java.util.ResourceBundle;
+import java.util.concurrent.ScheduledExecutorService;
 
 import static apz.activemq.controller.ControllerFactory.newInstance;
 import static com.jfoenix.controls.JFXButton.ButtonType.RAISED;
 import static de.jensd.fx.glyphs.materialdesignicons.MaterialDesignIcon.*;
+import static javafx.application.Platform.runLater;
 import static javafx.geometry.Pos.CENTER_LEFT;
 import static javafx.scene.text.TextAlignment.CENTER;
 
@@ -42,6 +47,12 @@ public class ProcessesController implements Initializable {
 
     @FXML
     private JFXNodesList nodesList;
+
+    @Inject
+    private JmxClient jmxClient;
+
+    @Inject
+    private ScheduledExecutorService scheduledExecutorService;
 
     @Override
     public void initialize(final URL location, final ResourceBundle resources) {
@@ -69,7 +80,12 @@ public class ProcessesController implements Initializable {
         final ConsumerController consumerController = newInstance(ConsumerController.class);
         consumerController.setParent(this);
 
-        new CreateConsumerJFXDialog(root, consumerController::addRoute, null);
+        final CreateConsumerJFXDialog createConsumerJFXDialog = new CreateConsumerJFXDialog(root, consumerController::addRoute, null);
+
+        scheduledExecutorService.execute(() -> jmxClient.getQueues().stream()
+                .map(DestinationViewMBean::getName)
+                .map(queue -> "jms:" + queue)
+                .forEach(uri -> runLater(() -> createConsumerJFXDialog.addQueueSuggestion(uri))));
     }
 
     private void createProducerJFXDialog(final @Nullable MouseEvent event) {
@@ -81,7 +97,12 @@ public class ProcessesController implements Initializable {
         final ProducerController producerController = newInstance(ProducerController.class);
         producerController.setParent(this);
 
-        new CreateProducerJFXDialog(root, producerController::addRoute, null);
+        final CreateProducerJFXDialog createProducerJFXDialog = new CreateProducerJFXDialog(root, producerController::addRoute, null);
+
+        scheduledExecutorService.execute(() -> jmxClient.getQueues().stream()
+                .map(DestinationViewMBean::getName)
+                .map(queue -> "jms:" + queue)
+                .forEach(uri -> runLater(() -> createProducerJFXDialog.addQueueSuggestion(uri))));
     }
 
     public void addProcess(final @Nonnull AnchorPane processPane) {

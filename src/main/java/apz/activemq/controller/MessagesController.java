@@ -429,9 +429,10 @@ public class MessagesController implements Initializable {
         final Consumer<String> onSelected = destination -> new ConfirmJFXDialog(root, moveSelectedMessagesTo.apply(destination), confirmationHeading, destination, "Move");
         final SelectDestinationJFXDialog selectDestinationJFXDialog = new SelectDestinationJFXDialog(root, selectHeading, queue.getValue().name.getValue(), onSelected);
 
+
         scheduledExecutorService.execute(() -> jmxClient.getQueues().stream()
                 .map(DestinationViewMBean::getName)
-                .forEach(selectDestinationJFXDialog::addDestination));
+                .forEach(queue -> runLater((() -> selectDestinationJFXDialog.addDestination(queue)))));
     }
 
     /**

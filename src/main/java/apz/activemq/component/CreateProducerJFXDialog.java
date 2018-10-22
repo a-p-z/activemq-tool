@@ -40,6 +40,10 @@ public class CreateProducerJFXDialog extends JFXDialog {
         show();
     }
 
+    public void addQueueSuggestion(final @Nonnull String suggestion) {
+        destination.addSuggestion(suggestion);
+    }
+
     private void initialize(final @Nonnull BiConsumer<String, String> action) {
 
         final JFXDialogLayout content = new JFXDialogLayout();

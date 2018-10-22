@@ -48,6 +48,10 @@ public class CreateConsumerJFXDialog extends JFXDialog {
         show();
     }
 
+    public void addQueueSuggestion(final @Nonnull String suggestion) {
+        source.addSuggestion(suggestion);
+    }
+
     private void initialize(final @Nonnull BiConsumer<String, String> action) {
 
         final JFXDialogLayout content = new JFXDialogLayout();

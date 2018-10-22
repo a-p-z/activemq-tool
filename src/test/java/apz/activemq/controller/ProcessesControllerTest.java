@@ -5,6 +5,7 @@ import apz.activemq.component.AutoCompleteJFXComboBox;
 import apz.activemq.component.CreateConsumerJFXDialog;
 import apz.activemq.component.CreateProducerJFXDialog;
 import apz.activemq.component.SimpleSnackbar;
+import apz.activemq.jmx.JmxClient;
 import com.jfoenix.controls.JFXTextField;
 import javafx.scene.Scene;
 import javafx.scene.layout.AnchorPane;
@@ -19,6 +20,8 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.testfx.framework.junit.ApplicationTest;
 
+import java.util.concurrent.ScheduledExecutorService;
+
 import static apz.activemq.controller.ControllerFactory.newInstance;
 import static apz.activemq.injection.Injector.clearRegistry;
 import static apz.activemq.injection.Injector.register;
@@ -28,6 +31,7 @@ import static java.lang.String.format;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 
@@ -46,6 +50,12 @@ public class ProcessesControllerTest extends ApplicationTest {
     @Mock
     private SerializationDataFormat serializationDataFormat;
 
+    @Mock
+    private JmxClient jmxClient;
+
+    @Mock
+    private ScheduledExecutorService scheduledExecutorService;
+
     @Override
     public void start(final Stage stage) {
 
@@ -56,6 +66,8 @@ public class ProcessesControllerTest extends ApplicationTest {
         register("snackbar", snackbar);
         register("camelContext", camelContext);
         register("serializationDataFormat", serializationDataFormat);
+        register("jmxClient", jmxClient);
+        register("scheduledExecutorService", scheduledExecutorService);
 
         final ProcessesController processesController = newInstance(ProcessesController.class);
 
@@ -74,7 +86,14 @@ public class ProcessesControllerTest extends ApplicationTest {
 
         final CreateConsumerJFXDialog createConsumerJFXDialog = lookup("#createConsumerJFXDialog").queryAs(CreateConsumerJFXDialog.class);
 
+        then(scheduledExecutorService).should().execute(any());
+
         then(snackbar).shouldHaveZeroInteractions();
+        then(camelContext).shouldHaveZeroInteractions();
+        then(serializationDataFormat).shouldHaveZeroInteractions();
+        then(jmxClient).shouldHaveZeroInteractions();
+        then(scheduledExecutorService).shouldHaveNoMoreInteractions();
+
         assertThat("dialog should be visible", createConsumerJFXDialog::isVisible, is(true));
     }
 
@@ -86,12 +105,19 @@ public class ProcessesControllerTest extends ApplicationTest {
 
         final CreateProducerJFXDialog createProducerJFXDialog = lookup("#createProducerJFXDialog").queryAs(CreateProducerJFXDialog.class);
 
+        then(scheduledExecutorService).should().execute(any());
+
         then(snackbar).shouldHaveZeroInteractions();
+        then(camelContext).shouldHaveZeroInteractions();
+        then(serializationDataFormat).shouldHaveZeroInteractions();
+        then(jmxClient).shouldHaveZeroInteractions();
+        then(scheduledExecutorService).shouldHaveNoMoreInteractions();
+
         assertThat("dialog should be visible", createProducerJFXDialog::isVisible, is(true));
     }
 
     @Test
-    public void whenCreateAConsumerThePaneShouldBeVisible() {
+    public void whenCreateAConsumerThePaneShouldBeVisible() throws Exception {
 
         clickOn("#nodesList");
         clickOn("#consumer");
@@ -101,8 +127,17 @@ public class ProcessesControllerTest extends ApplicationTest {
 
         clickOn("#createConsumer");
 
-        final AnchorPane consumerPane = lookup("#consumer-001").queryAs(AnchorPane.class);
+        then(camelContext).should().getRouteDefinitions();
+        then(camelContext).should().addRoutes(any());
+        then(scheduledExecutorService).should().execute(any());
+
         then(snackbar).shouldHaveZeroInteractions();
+        then(camelContext).shouldHaveNoMoreInteractions();
+        then(serializationDataFormat).shouldHaveZeroInteractions();
+        then(jmxClient).shouldHaveZeroInteractions();
+        then(scheduledExecutorService).shouldHaveNoMoreInteractions();
+
+        final AnchorPane consumerPane = lookup("#consumer-001").queryAs(AnchorPane.class);
         assertThat("consumer pane should be visible", consumerPane::isVisible, is(true));
     }
 
@@ -124,7 +159,18 @@ public class ProcessesControllerTest extends ApplicationTest {
 
         clickOn("#closeButton");
 
+        then(camelContext).should().getRouteDefinitions();
+        then(camelContext).should().addRoutes(any());
+        then(camelContext).should().stopRoute(anyString());
+        then(camelContext).should().removeRoute(anyString());
+        then(scheduledExecutorService).should().execute(any());
+
         then(snackbar).shouldHaveZeroInteractions();
+        then(camelContext).shouldHaveNoMoreInteractions();
+        then(serializationDataFormat).shouldHaveZeroInteractions();
+        then(jmxClient).shouldHaveZeroInteractions();
+        then(scheduledExecutorService).shouldHaveNoMoreInteractions();
+
         assertThat("dialog should be visible", lookup("#consumer-001")::query, nullValue());
     }
 }
